@@ -3,86 +3,274 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Enhancer Pro</title>
+    <title>Video Enhancer Pro - Long Video Splitter</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #f4f4f9; color: #333; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #2c3e50; }
+        .container { max-width: 640px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; font-size: 22px; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px;}
+        input[type="file"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 10px; box-sizing: border-box; }
         button { width: 100%; padding: 12px; background-color: #3498db; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
         button:hover { background-color: #2980b9; }
         button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
-        .status { margin-top: 15px; text-align: center; font-weight: bold; color: #e67e22; }
-        video { max-width: 100%; margin-top: 20px; border-radius: 4px; display: none; }
+        .status { margin-top: 15px; text-align: center; font-weight: bold; color: #e67e22; white-space: pre-line; }
+        .error { color: #c0392b; }
+        .hint { font-size: 12px; color: #7f8c8d; margin-top: -6px; margin-bottom: 12px; }
+        .warn-box { background: #fff8e1; border: 1px solid #ffe082; border-radius: 4px; padding: 10px; font-size: 13px; margin-bottom: 15px; color: #7a5c00; }
+        .danger-box { background: #fdecea; border: 1px solid #f5b7b1; border-radius: 4px; padding: 10px; font-size: 13px; margin-bottom: 15px; color: #922b21; display: none; }
+        .file-info { font-size: 13px; color: #555; margin-top: -6px; margin-bottom: 12px; }
+        progress { width: 100%; height: 18px; margin-top: 10px; }
+        .overall-progress-label { font-size: 12px; color: #555; margin-top: 10px; }
+        #partsList { margin-top: 20px; }
+        .part-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border: 1px solid #eee; border-radius: 4px; margin-bottom: 8px; background: #fafafa; }
+        .part-item.processing { border-color: #3498db; background: #eaf4fc; }
+        .part-item.done { border-color: #27ae60; background: #eafaf1; }
+        .part-name { font-weight: bold; font-size: 14px; }
+        .part-status { font-size: 12px; color: #777; }
+        .part-download { background: #27ae60; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 13px; }
+        .part-download.disabled { background: #bdc3c7; pointer-events: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Video & Audio Enhancer</h1>
+        <h1>Video & Audio Enhancer — Video Panjang (Auto Split)</h1>
+        <div class="warn-box">
+            ⚠️ Semua proses berjalan di perangkat Anda sendiri (browser), tanpa upload ke server. Untuk video 4 jam: gunakan <b>Chrome/Edge di laptop/PC</b> (bukan HP), sambungkan ke listrik, jangan biarkan laptop sleep, dan <b>jangan tutup tab</b> selama proses berjalan. Tiap part yang selesai bisa langsung diunduh — jadi jika terhenti di tengah jalan, part yang sudah selesai tidak hilang.
+        </div>
+        <div id="sizeDanger" class="danger-box"></div>
+
         <form id="uploadForm">
             <div class="form-group">
                 <label for="videoFile">Pilih Video dari Memori:</label>
                 <input type="file" id="videoFile" name="video" accept="video/*" required>
+                <div id="fileInfo" class="file-info"></div>
             </div>
-
+            <div class="form-group">
+                <label for="segMinutes">Durasi tiap Part (menit):</label>
+                <input type="number" id="segMinutes" min="5" max="60" value="25">
+                <div class="hint">Video akan otomatis dipecah per segmen ini sebelum diproses satu per satu.</div>
+            </div>
             <div class="form-group">
                 <label for="fps">Target FPS (Frame Rate):</label>
                 <select id="fps" name="fps">
+                    <option value="30">30 FPS (Normal - Paling Cepat)</option>
                     <option value="60">60 FPS (Smooth)</option>
-                    <option value="120">120 FPS (Ultra Smooth - Proses Lama)</option>
+                    <option value="120">120 FPS (Ultra Smooth - Sangat Lambat, Tidak Disarankan untuk Video Panjang)</option>
                 </select>
             </div>
-
             <div class="form-group">
                 <label for="res">Resolusi (HD):</label>
                 <select id="res" name="res">
                     <option value="1280x720">HD 720p (Lebih Cepat)</option>
                     <option value="1920x1080">Full HD 1080p</option>
                 </select>
+                <div class="hint">Ini memperbesar kanvas video & merapikan rasio aspek, bukan menambah detail asli seperti AI upscaler.</div>
             </div>
-
-            <button type="submit" id="processBtn">Proses Video Sekarang</button>
+            <button type="submit" id="processBtn">Mulai: Pecah & Proses Video</button>
         </form>
-        
+
         <div id="statusText" class="status"></div>
-        <video id="resultVideo" controls></video>
+        <progress id="progressBar" value="0" max="100"></progress>
+        <div id="overallLabel" class="overall-progress-label"></div>
+
+        <div id="partsList"></div>
     </div>
 
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
     <script>
-        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+        const { FFmpeg } = FFmpegWASM;
+        const { fetchFile } = FFmpegUtil;
+
+        const statusEl = document.getElementById('statusText');
+        const progressBar = document.getElementById('progressBar');
+        const overallLabel = document.getElementById('overallLabel');
+        const btn = document.getElementById('processBtn');
+        const partsListEl = document.getElementById('partsList');
+        const fileInput = document.getElementById('videoFile');
+        const fileInfoEl = document.getElementById('fileInfo');
+        const sizeDangerEl = document.getElementById('sizeDanger');
+
+        let ffmpeg = null;
+        let ffmpegLoaded = false;
+
+        function formatBytes(bytes) {
+            if (bytes >= 1e9) return (bytes / 1e9).toFixed(2) + ' GB';
+            return (bytes / 1e6).toFixed(0) + ' MB';
+        }
+
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            sizeDangerEl.style.display = 'none';
+            if (!file) { fileInfoEl.innerText = ''; return; }
+
+            fileInfoEl.innerText = `File dipilih: ${file.name} (${formatBytes(file.size)})`;
+
+            // Peringatan realistis berdasarkan ukuran file aktual - browser (WebAssembly)
+            // punya batas memori sekitar 2-4GB tergantung perangkat & browser.
+            const GB = 1024 * 1024 * 1024;
+            if (file.size > 4 * GB) {
+                sizeDangerEl.style.display = 'block';
+                sizeDangerEl.innerText = `File ini ${formatBytes(file.size)} — kemungkinan BESAR akan gagal/crash karena melebihi batas memori browser. Disarankan kompres/pecah dulu file ini dengan aplikasi desktop (VLC, Shotcut, atau HandBrake) sebelum diproses di sini.`;
+            } else if (file.size > 2 * GB) {
+                sizeDangerEl.style.display = 'block';
+                sizeDangerEl.innerText = `File ini ${formatBytes(file.size)} — cukup besar untuk ukuran browser. Mungkin berhasil di laptop/PC dengan RAM besar (8GB+), tapi berisiko gagal di perangkat lebih lemah. Tutup tab/aplikasi lain untuk memberi ruang memori sebanyak mungkin.`;
+            }
+        });
+
+        async function loadFFmpeg(onLog) {
+            if (ffmpegLoaded) return;
+            statusEl.innerText = 'Menyiapkan mesin video (sekali saja, ~30MB)...';
+            ffmpeg = new FFmpeg();
+            ffmpeg.on('log', ({ message }) => { if (onLog) onLog(message); console.log(message); });
+
+            const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+            await ffmpeg.load({
+                coreURL: `${baseURL}/ffmpeg-core.js`,
+                wasmURL: `${baseURL}/ffmpeg-core.wasm`,
+            });
+            ffmpegLoaded = true;
+        }
+
+        function buildFilters(w, h, fps) {
+            const scaleFilter = `scale=w=${w}:h=${h}:force_original_aspect_ratio=decrease,pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2:color=black`;
+            const fpsFilter = `minterpolate=fps=${fps}:mi_mode=blend`;
+            const videoFilter = `${scaleFilter},${fpsFilter}`;
+            const audioFilter = 'highpass=f=80,afftdn=nf=-25,loudnorm=I=-16:TP=-1.5:LRA=11';
+            return { videoFilter, audioFilter };
+        }
+
+        function addPartRow(index, label) {
+            const row = document.createElement('div');
+            row.className = 'part-item processing';
+            row.id = `part-row-${index}`;
+            row.innerHTML = `
+                <div>
+                    <div class="part-name">${label}</div>
+                    <div class="part-status" id="part-status-${index}">Menunggu giliran diproses...</div>
+                </div>
+                <a class="part-download disabled" id="part-link-${index}">Belum siap</a>
+            `;
+            partsListEl.appendChild(row);
+        }
+
+        function updatePartStatus(index, text) {
+            const el = document.getElementById(`part-status-${index}`);
+            if (el) el.innerText = text;
+        }
+
+        function markPartDone(index, blobUrl, filename) {
+            const row = document.getElementById(`part-row-${index}`);
+            row.className = 'part-item done';
+            updatePartStatus(index, 'Selesai ✔');
+            const link = document.getElementById(`part-link-${index}`);
+            link.href = blobUrl;
+            link.download = filename;
+            link.innerText = '⬇️ Unduh';
+            link.classList.remove('disabled');
+        }
+
+        document.getElementById('uploadForm').addEventListener('submit', async function (e) {
             e.preventDefault();
-            const formData = new FormData(this);
-            const btn = document.getElementById('processBtn');
-            const status = document.getElementById('statusText');
-            const videoEl = document.getElementById('resultVideo');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const fps = document.getElementById('fps').value;
+            const [w, h] = document.getElementById('res').value.split('x');
+            const segMinutes = Math.max(5, parseInt(document.getElementById('segMinutes').value, 10) || 25);
+            const segSeconds = segMinutes * 60;
 
             btn.disabled = true;
-            btn.innerText = "Memproses... Mohon Tunggu (Bisa makan waktu beberapa menit)";
-            status.innerText = "Sedang merender FPS, menaikkan resolusi, dan membersihkan suara...";
+            btn.innerText = 'Memproses...';
+            statusEl.classList.remove('error');
+            partsListEl.innerHTML = '';
+            progressBar.value = 0;
 
             try {
-                const response = await fetch('/process', {
-                    method: 'POST',
-                    body: formData
-                });
+                await loadFFmpeg();
 
-                if (!response.ok) {
-                    throw new Error('Gagal memproses video');
+                // --- TAHAP 1: Muat file asli ke memori ---
+                statusEl.innerText = 'Memuat file video ke mesin proses (bisa lama untuk file besar)...';
+                const inputExt = file.name.match(/\.[0-9a-z]+$/i)?.[0] || '.mp4';
+                const inputName = 'input' + inputExt;
+                await ffmpeg.writeFile(inputName, await fetchFile(file));
+
+                // --- TAHAP 2: Pecah jadi beberapa part TANPA re-encode (cepat & ringan) ---
+                statusEl.innerText = `Memecah video menjadi part @ ${segMinutes} menit (stream-copy, tanpa re-encode)...`;
+                await ffmpeg.exec([
+                    '-i', inputName,
+                    '-c', 'copy',
+                    '-map', '0',
+                    '-f', 'segment',
+                    '-segment_time', String(segSeconds),
+                    '-reset_timestamps', '1',
+                    'raw_part_%03d.mp4'
+                ]);
+
+                // File asli sudah tidak diperlukan lagi - hapus untuk bebaskan memori
+                await ffmpeg.deleteFile(inputName);
+
+                // --- TAHAP 3: Cari daftar part yang dihasilkan ---
+                const dirEntries = await ffmpeg.listDir('/');
+                const rawParts = dirEntries
+                    .map(e => e.name)
+                    .filter(name => /^raw_part_\d+\.mp4$/.test(name))
+                    .sort();
+
+                if (rawParts.length === 0) {
+                    throw new Error('Gagal memecah video. Pastikan format file valid (mp4/mov/mkv, dll).');
                 }
 
-                const blob = await response.blob();
-                const videoURL = URL.createObjectURL(blob);
-                
-                videoEl.src = videoURL;
-                videoEl.style.display = "block";
-                status.innerText = "Selesai! Anda bisa mengunduh atau memutar video di bawah ini.";
-                btn.innerText = "Proses Video Lain";
+                statusEl.innerText = `Video berhasil dipecah menjadi ${rawParts.length} part. Memulai proses satu per satu...`;
+                rawParts.forEach((_, i) => addPartRow(i, `Part ${i + 1} dari ${rawParts.length}`));
+
+                const { videoFilter, audioFilter } = buildFilters(w, h, fps);
+
+                // --- TAHAP 4: Proses tiap part SATU PER SATU, lalu bebaskan memori sebelum lanjut ---
+                for (let i = 0; i < rawParts.length; i++) {
+                    const rawName = rawParts[i];
+                    const outName = `enhanced_part_${String(i + 1).padStart(3, '0')}.mp4`;
+
+                    overallLabel.innerText = `Part ${i + 1} dari ${rawParts.length}`;
+                    progressBar.value = Math.round((i / rawParts.length) * 100);
+                    updatePartStatus(i, 'Sedang diproses (merender FPS, resolusi, membersihkan suara)...');
+                    statusEl.innerText = `Memproses part ${i + 1} dari ${rawParts.length}...\nTiap part yang selesai bisa langsung diunduh.`;
+
+                    await ffmpeg.exec([
+                        '-i', rawName,
+                        '-vf', videoFilter,
+                        '-af', audioFilter,
+                        '-c:v', 'libx264',
+                        '-preset', 'ultrafast',
+                        '-crf', '26',
+                        '-c:a', 'aac',
+                        '-b:a', '192k',
+                        outName
+                    ]);
+
+                    const data = await ffmpeg.readFile(outName);
+                    const blob = new Blob([data.buffer], { type: 'video/mp4' });
+                    const blobUrl = URL.createObjectURL(blob);
+                    markPartDone(i, blobUrl, outName);
+
+                    // Bebaskan memori: hapus file mentah & hasil dari filesystem virtual FFmpeg
+                    // (blob hasil sudah aman tersimpan di 'blobUrl', tidak hilang)
+                    await ffmpeg.deleteFile(rawName);
+                    await ffmpeg.deleteFile(outName);
+
+                    progressBar.value = Math.round(((i + 1) / rawParts.length) * 100);
+                }
+
+                overallLabel.innerText = '';
+                statusEl.innerText = `Selesai! Semua ${rawParts.length} part sudah siap diunduh di bawah. Silakan unduh satu per satu untuk diupload ke YouTube.`;
+                btn.innerText = 'Proses Video Lain';
             } catch (error) {
-                status.innerText = "Error: " + error.message;
-                btn.innerText = "Coba Lagi";
+                console.error(error);
+                statusEl.classList.add('error');
+                statusEl.innerText = 'Error: ' + (error.message || 'Gagal memproses video. Coba file lebih kecil, durasi part lebih pendek, atau gunakan Chrome/Edge desktop dengan RAM lebih besar.');
+                btn.innerText = 'Coba Lagi';
             } finally {
                 btn.disabled = false;
             }
