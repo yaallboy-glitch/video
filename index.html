@@ -87,26 +87,72 @@
     .track-remove:hover { color: #f87171; }
 
     /* ===== EDIT MULTI-TRACK (mirip GarageBand main view) ===== */
-    .edit-timeline-wrap { position: relative; background: #080c1e; border: 1px solid rgba(255,255,255,.06); border-radius: 10px; overflow: auto; max-height: 60vh; }
-    .edit-ruler { position: sticky; top: 0; z-index: 5; height: 22px; background: #0d1230; border-bottom: 1px solid rgba(255,255,255,.08); margin-left: 150px; }
+    .edit-timeline-wrap { position: relative; background: #080c1e; border: 1px solid rgba(255,255,255,.06); border-radius: 10px; overflow: auto; max-height: 55vh; }
+    .edit-ruler { position: sticky; top: 0; z-index: 5; height: 22px; background: #0d1230; border-bottom: 1px solid rgba(255,255,255,.08); margin-left: 210px; }
     .edit-ruler span { position: absolute; top: 3px; font-size: 9px; color: #71717a; }
     .edit-tracks { position: relative; }
-    .edit-track-row { display: flex; border-bottom: 1px solid rgba(255,255,255,.05); height: 56px; }
-    .edit-track-header { width: 150px; flex-shrink: 0; padding: 6px 8px; display: flex; flex-direction: column; justify-content: center; gap: 2px; background: rgba(19,24,56,.5); position: sticky; left: 0; z-index: 4; border-right: 1px solid rgba(255,255,255,.06); }
-    .edit-track-header .tname { font-size: 10px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .edit-track-header .thead-btns { display: flex; gap: 6px; align-items: center; }
-    .edit-track-header .thead-btns i { font-size: 11px; color: #71717a; cursor: pointer; }
-    .edit-track-header .thead-btns i:hover { color: #e4e4e7; }
-    .edit-track-header .thead-btns i.muted { color: #f87171; }
-    .edit-track-header input[type="range"] { width: 100%; height: 3px; }
-    .edit-track-lane { position: relative; flex: 1; }
-    .edit-region { position: absolute; top: 6px; height: 44px; background: linear-gradient(135deg,#7c5cff,#5b3fd6); border-radius: 6px; cursor: grab; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.15); }
+    .edit-track-row { display: flex; border-bottom: 2px solid #060914; min-height: 92px; }
+    .edit-track-header { width: 210px; flex-shrink: 0; padding: 8px 10px; display: flex; flex-direction: column; justify-content: center; gap: 6px; position: sticky; left: 0; z-index: 4; }
+    .edit-track-header .thead-top { display: flex; align-items: center; gap: 6px; }
+    .edit-track-header .tnum { font-size: 11px; font-weight: 700; opacity: .85; width: 14px; }
+    .edit-track-header .tname { font-size: 11px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46px; }
+    .pill-btn { font-size: 9px; font-weight: 600; background: rgba(255,255,255,.16); border: none; color: #fff; padding: 3px 7px; border-radius: 20px; cursor: pointer; white-space: nowrap; }
+    .pill-btn.active-m { background: #fff; color: #dc2626; }
+    .pill-btn.active-s { background: #fff; color: #16a34a; }
+    .pill-btn.on { background: rgba(255,255,255,.35); }
+    .thead-menu-wrap { position: relative; margin-left: auto; }
+    .thead-menu-dropdown { position: absolute; top: 20px; right: 0; background: #18182e; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; padding: 4px; z-index: 20; min-width: 110px; box-shadow: 0 6px 20px rgba(0,0,0,.4); }
+    .thead-menu-dropdown div { font-size: 11px; padding: 6px 10px; border-radius: 6px; cursor: pointer; color: #e4e4e7; }
+    .thead-menu-dropdown div:hover { background: rgba(255,255,255,.08); }
+    .thead-pan-row { display: flex; align-items: center; gap: 6px; }
+    .thead-pan-row input[type="range"] { flex: 1; height: 3px; -webkit-appearance: none; background: rgba(255,255,255,.25); border-radius: 2px; }
+    .thead-pan-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: #fff; border-radius: 50%; cursor: pointer; }
+    .gain-knob { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(255,255,255,.5); position: relative; cursor: ns-resize; flex-shrink: 0; background: rgba(0,0,0,.15); }
+    .gain-knob .knob-indicator { position: absolute; top: 2px; left: 50%; width: 2px; height: 10px; background: #fff; transform-origin: bottom center; margin-left: -1px; }
+    .gain-knob-wrap { display: flex; align-items: center; gap: 4px; }
+    .gain-knob-lr { font-size: 7px; color: rgba(255,255,255,.6); line-height: 1.4; }
+    .thead-mic { width: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .edit-track-lane { position: relative; flex: 1; background: #05070f; }
+    .edit-region { position: absolute; top: 8px; height: 76px; border-radius: 6px; cursor: grab; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.15); }
     .edit-region.dragging { cursor: grabbing; opacity: .8; z-index: 10; }
-    .edit-region .region-label { position: absolute; top: 2px; left: 6px; font-size: 9px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 12px); pointer-events: none; }
-    .edit-region .rhandle { position: absolute; top: 0; width: 8px; height: 100%; cursor: ew-resize; background: rgba(255,255,255,.15); }
+    .edit-region .region-label { position: absolute; top: 2px; left: 6px; font-size: 9px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 12px); pointer-events: none; z-index: 2; }
+    .edit-region canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: .9; }
+    .edit-region .rhandle { position: absolute; top: 0; width: 8px; height: 100%; cursor: ew-resize; background: rgba(255,255,255,.15); z-index: 3; }
     .edit-region .rhandle.left { left: 0; border-radius: 6px 0 0 6px; }
     .edit-region .rhandle.right { right: 0; border-radius: 0 6px 6px 0; }
-    .edit-playhead { position: absolute; top: 22px; bottom: 0; width: 2px; background: #fbbf24; z-index: 6; pointer-events: none; }
+    .edit-playhead { position: absolute; top: 22px; bottom: 0; width: 2px; background: #fff; z-index: 6; pointer-events: none; }
+
+    /* ===== FX POPOVER PER TRACK ===== */
+    .fx-popover { position: fixed; background: #18182e; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; padding: 12px; z-index: 100; width: 220px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+    .fx-popover label { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #e4e4e7; margin-bottom: 8px; }
+    .fx-popover input[type="range"] { width: 100%; margin: 4px 0 8px; }
+
+    /* ===== MIXER ROWS (AutoMix / Mastering / Master Fader) ===== */
+    .mixer-row { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 12px 14px; margin-top: 8px; cursor: default; }
+    .mixer-row i { font-size: 15px; color: #e4e4e7; flex-shrink: 0; }
+    .mixer-row-title { font-size: 13px; font-weight: 600; }
+    .mixer-row-sub { font-size: 10px; color: #71717a; }
+    .ai-badge { background: #3b82f6; color: #fff; font-size: 9px; padding: 1px 6px; border-radius: 6px; margin-left: 4px; }
+    #autoMixBtn { cursor: pointer; }
+    #autoMixBtn:hover { border-color: rgba(124,92,255,.4); }
+    .mastering-row { background: linear-gradient(135deg, rgba(124,58,237,.18), rgba(88,28,135,.12)); border-color: rgba(168,85,247,.25); }
+    .toggle-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: rgba(255,255,255,.15); border-radius: 20px; transition: .2s; cursor: pointer; }
+    .toggle-slider::before { content: ''; position: absolute; width: 18px; height: 18px; left: 2px; top: 2px; background: #fff; border-radius: 50%; transition: .2s; }
+    .toggle-switch input:checked + .toggle-slider { background: #7c5cff; }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+    /* ===== TRANSPORT BAR (bawah, mirip screenshot) ===== */
+    .transport-bar { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-radius: 14px; padding: 10px 16px; margin-top: 10px; }
+    .tb-btn { background: transparent; border: none; color: #e4e4e7; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 9px; cursor: pointer; padding: 4px; }
+    .tb-btn i { font-size: 15px; }
+    .tb-btn:hover { color: #a78bfa; }
+    .tb-round { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,.08); justify-content: center; }
+    .tb-round i { font-size: 16px; }
+    .tb-play { background: #ef4444; }
+    .tb-play i { font-size: 16px; }
+    .tb-play:hover { background: #dc2626; color: #fff; }
 
     /* ===== HAMBURGER (hidden by default on desktop) ===== */
     .menu-toggle { display: none; position: fixed; top: 12px; left: 12px; z-index: 60; width: 38px; height: 38px; border-radius: 10px; background: rgba(19,24,56,.9); border: 1px solid rgba(255,255,255,.1); color: #e4e4e7; font-size: 16px; align-items: center; justify-content: center; }
@@ -219,21 +265,59 @@
         <div class="flex items-center gap-2 flex-wrap">
           <select id="addTrackSelect" class="btn-ghost text-xs" style="background:#18182e"></select>
           <button class="btn-ghost text-xs" id="addTrackBtn"><i class="fa-solid fa-plus"></i> Tambah Track</button>
-          <button class="btn-ghost text-xs" id="editPlayBtn"><i class="fa-solid fa-circle-play"></i> Play Mix</button>
-          <button class="btn-ghost text-xs" id="editStopBtn"><i class="fa-solid fa-stop"></i> Stop</button>
           <span class="text-[10px] text-zinc-500">Zoom</span>
           <input type="range" id="editZoomSlider" min="15" max="120" value="40" style="width:80px">
           <div style="flex:1"></div>
+          <button class="btn-ghost text-xs" id="undoBtn" disabled><i class="fa-solid fa-rotate-left"></i></button>
+          <button class="btn-ghost text-xs" id="redoBtn" disabled><i class="fa-solid fa-rotate-right"></i></button>
           <button class="btn-primary" id="mixdownBtn"><i class="fa-solid fa-file-export"></i> Mixdown & Ekspor</button>
-          <button class="btn-ghost text-xs" id="playMixdownBtn" disabled><i class="fa-solid fa-circle-play play-icon" data-key="mixdown"></i> Play Hasil</button>
           <button class="btn-ghost text-xs" id="downloadMixdownBtn" disabled><i class="fa-solid fa-download"></i> Download</button>
         </div>
         <p class="text-[10px] text-zinc-500 mt-2" id="editStatus">Belum ada track</p>
       </div>
+
       <div class="edit-timeline-wrap" id="editTimelineWrap">
         <div class="edit-ruler" id="editRuler"></div>
         <div class="edit-tracks" id="editTracks"></div>
         <div class="edit-playhead" id="editPlayhead" style="display:none"></div>
+      </div>
+
+      <!-- AutoMix AI -->
+      <div class="mixer-row" id="autoMixBtn">
+        <i class="fa-solid fa-sliders"></i>
+        <span class="mixer-row-title">AutoMix <span class="ai-badge">AI</span></span>
+        <i class="fa-solid fa-chevron-right" style="margin-left:auto;color:#71717a"></i>
+      </div>
+
+      <!-- Mastering -->
+      <div class="mixer-row mastering-row">
+        <i class="fa-solid fa-music" style="color:#c084fc"></i>
+        <div style="flex:1">
+          <div class="mixer-row-title">Mastering</div>
+          <div class="mixer-row-sub" id="masteringLabel">Universal · 50</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="masteringToggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <input type="range" id="masteringIntensity" min="0" max="100" value="50" style="width:100%;margin:2px 0 10px">
+
+      <!-- Master Fader -->
+      <div class="mixer-row">
+        <i class="fa-solid fa-volume-high"></i>
+        <input type="range" id="masterFader" min="-60" max="12" step="0.5" value="0" style="flex:1">
+        <span class="text-[11px] text-zinc-400" id="masterFaderVal" style="min-width:52px;text-align:right">0.0 dB</span>
+      </div>
+
+      <!-- Transport bar bawah -->
+      <div class="transport-bar">
+        <button class="tb-btn" id="autoPitchBtn"><i class="fa-solid fa-wave-square"></i><span>AutoPitch</span></button>
+        <div style="flex:1"></div>
+        <button class="tb-btn tb-round" id="skipStartBtn"><i class="fa-solid fa-backward-step"></i></button>
+        <button class="tb-btn tb-round tb-play" id="transportPlayBtn"><i class="fa-solid fa-play"></i></button>
+        <div style="flex:1"></div>
+        <button class="tb-btn" id="fxQuickBtn"><i class="fa-solid fa-wand-magic-sparkles"></i><span>+Fx</span></button>
       </div>
     </div>
 
@@ -1017,7 +1101,7 @@
     // ============================================================
     // EDIT MULTI-TRACK (mirip GarageBand: track sejajar, region bebas geser)
     // ============================================================
-    let tracks = []; // { id, fileId, name, offset, regionStart, regionEnd, duration, volume, muted }
+let tracks = []; // { id, fileId, name, offset, regionStart, regionEnd, duration, volume, pan, muted, solo, color }
     let trackCounter = 0;
     let editPxPerSec = 40;
     let lastMixdownUrl = null, lastMixdownName = null;
@@ -1025,6 +1109,42 @@
     let mixStartCtxTime = 0;
     let mixPreviewRAF = null;
     let sharedCtx = null;
+    let isPlayingMix = false;
+    const TRACK_COLORS = ['#16a34a', '#2563eb', '#dc2626', '#a855f7', '#f59e0b', '#0891b2', '#db2777', '#65a30d'];
+    let masteringEnabled = true;
+    let masteringIntensity = 50;
+    let masterVolumeDb = 0;
+
+    // ---------- UNDO / REDO ----------
+    let undoStack = [];
+    let redoStack = [];
+    function snapshotTracks() { return JSON.parse(JSON.stringify(tracks)); }
+    function pushUndo() {
+      undoStack.push(snapshotTracks());
+      if (undoStack.length > 30) undoStack.shift();
+      redoStack = [];
+      updateUndoRedoBtns();
+    }
+    function updateUndoRedoBtns() {
+      $('undoBtn').disabled = undoStack.length === 0;
+      $('redoBtn').disabled = redoStack.length === 0;
+    }
+    $('undoBtn').addEventListener('click', () => {
+      if (!undoStack.length) return;
+      redoStack.push(snapshotTracks());
+      tracks = undoStack.pop();
+      renderEditTimeline();
+      updateUndoRedoBtns();
+      log('info', '↩️ Undo.');
+    });
+    $('redoBtn').addEventListener('click', () => {
+      if (!redoStack.length) return;
+      undoStack.push(snapshotTracks());
+      tracks = redoStack.pop();
+      renderEditTimeline();
+      updateUndoRedoBtns();
+      log('info', '↪️ Redo.');
+    });
 
     function getSharedCtx() {
       if (!sharedCtx) sharedCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1039,13 +1159,14 @@
     function addTrack(fileId) {
       const f = files.find(x => x.id === fileId);
       if (!f) return;
-      // cari posisi offset default: taruh setelah track terakhir yang sudah ada biar tidak numpuk total
+      pushUndo();
       const lastEnd = tracks.reduce((max, t) => Math.max(max, t.offset + (t.regionEnd - t.regionStart)), 0);
       tracks.push({
         id: ++trackCounter, fileId, name: f.name,
         offset: tracks.length === 0 ? 0 : lastEnd,
         regionStart: 0, regionEnd: f.duration, duration: f.duration,
-        volume: 1, muted: false
+        volume: 1, pan: 0, muted: false, solo: false,
+        color: TRACK_COLORS[(tracks.length) % TRACK_COLORS.length]
       });
       renderEditTimeline();
       $('editStatus').textContent = `${tracks.length} track`;
@@ -1067,6 +1188,12 @@
       return tracks.reduce((max, t) => Math.max(max, t.offset + (t.regionEnd - t.regionStart)), 0);
     }
 
+    function isEffectivelyMuted(t) {
+      const anySolo = tracks.some(x => x.solo);
+      if (anySolo) return !t.solo;
+      return t.muted;
+    }
+
     function renderRuler() {
       const total = Math.max(timelineTotalDuration() + 10, 30);
       const ruler = $('editRuler');
@@ -1078,9 +1205,27 @@
       ruler.innerHTML = html;
     }
 
+    function drawRegionWaveform(canvas, waveformData, color) {
+      if (!canvas || !waveformData) return;
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = color;
+      const mid = h / 2;
+      const step = w / waveformData.length;
+      waveformData.forEach((v, i) => {
+        const barH = Math.max(v * h * 0.9, 1);
+        ctx.fillRect(i * step, mid - barH / 2, Math.max(step - 0.5, 0.5), barH);
+      });
+    }
+
     function renderEditTimeline() {
       refreshAddTrackSelect();
       renderRuler();
+      updateUndoRedoBtns();
       const container = $('editTracks');
       if (!tracks.length) {
         container.innerHTML = '<div class="text-center text-zinc-500 text-sm py-10">Belum ada track. Pilih file & klik "Tambah Track".</div>';
@@ -1088,22 +1233,38 @@
       }
       const total = Math.max(timelineTotalDuration() + 10, 30);
       let html = '';
-      tracks.forEach(t => {
+      tracks.forEach((t, idx) => {
         const left = t.offset * editPxPerSec;
         const width = Math.max((t.regionEnd - t.regionStart) * editPxPerSec, 20);
+        const muted = isEffectivelyMuted(t);
+        const knobAngle = -130 + (t.volume / 1.5) * 260;
         html += `
           <div class="edit-track-row" data-track-id="${t.id}">
-            <div class="edit-track-header">
-              <div class="tname">${t.name}</div>
-              <div class="thead-btns">
-                <i class="fa-solid fa-volume-${t.muted ? 'xmark muted' : 'high'} tmute" data-id="${t.id}" title="Mute"></i>
-                <input type="range" class="tvol" data-id="${t.id}" min="0" max="1.5" step="0.05" value="${t.volume}">
-                <i class="fa-solid fa-copy tdup" data-id="${t.id}" title="Duplikat (untuk transisi/layer)"></i>
-                <i class="fa-solid fa-trash tdel" data-id="${t.id}" title="Hapus track"></i>
+            <div class="edit-track-header" style="background:${t.color}${muted ? '55' : '2a'}">
+              <div class="thead-top">
+                <span class="tnum">${idx + 1}</span>
+                <span class="tname" title="${t.name}">${t.name}</span>
+                <button class="pill-btn tfx" data-id="${t.id}">+Fx</button>
+                <div class="thead-menu-wrap">
+                  <button class="pill-btn tmenu" data-id="${t.id}"><i class="fa-solid fa-ellipsis"></i></button>
+                </div>
+              </div>
+              <div class="thead-top">
+                <button class="pill-btn tmute ${t.muted ? 'active-m' : ''}" data-id="${t.id}">M</button>
+                <button class="pill-btn tsolo ${t.solo ? 'active-s' : ''}" data-id="${t.id}">S</button>
+                <div class="thead-pan-row" style="flex:1">
+                  <span style="font-size:8px;color:rgba(255,255,255,.6)">L</span>
+                  <input type="range" class="tpan" data-id="${t.id}" min="-1" max="1" step="0.1" value="${t.pan}">
+                  <span style="font-size:8px;color:rgba(255,255,255,.6)">R</span>
+                </div>
+                <div class="gain-knob-wrap">
+                  <div class="gain-knob tgain" data-id="${t.id}"><div class="knob-indicator" style="transform:rotate(${knobAngle}deg)"></div></div>
+                </div>
               </div>
             </div>
             <div class="edit-track-lane" style="width:${total * editPxPerSec}px">
-              <div class="edit-region" data-id="${t.id}" style="left:${left}px;width:${width}px">
+              <div class="edit-region" data-id="${t.id}" style="left:${left}px;width:${width}px;background:${t.color};opacity:${muted ? 0.35 : 1}">
+                <canvas class="region-wave" data-id="${t.id}"></canvas>
                 <div class="rhandle left" data-id="${t.id}"></div>
                 <span class="region-label">${t.name} (${(t.regionEnd - t.regionStart).toFixed(1)}s)</span>
                 <div class="rhandle right" data-id="${t.id}"></div>
@@ -1114,39 +1275,100 @@
       });
       container.innerHTML = html;
       wireTrackEvents(container);
+      // gambar waveform tiap region setelah elemen ter-render
+      tracks.forEach(t => {
+        const f = files.find(x => x.id === t.fileId);
+        const canvas = container.querySelector(`.region-wave[data-id="${t.id}"]`);
+        if (f && canvas) drawRegionWaveform(canvas, f.waveformData, 'rgba(255,255,255,.55)');
+      });
     }
+
+    function closeAllMenus() { document.querySelectorAll('.thead-menu-dropdown').forEach(el => el.remove()); }
+    document.addEventListener('click', (e) => {
+      if (!e.target.classList.contains('tmenu') && !e.target.closest('.tmenu')) closeAllMenus();
+    });
 
     function wireTrackEvents(container) {
       container.querySelectorAll('.tmute').forEach(el => el.addEventListener('click', () => {
-        const t = tracks.find(x => x.id === parseInt(el.dataset.id)); if (t) { t.muted = !t.muted; renderEditTimeline(); }
+        const t = tracks.find(x => x.id === parseInt(el.dataset.id)); if (t) { pushUndo(); t.muted = !t.muted; renderEditTimeline(); }
       }));
-      container.querySelectorAll('.tvol').forEach(el => el.addEventListener('input', () => {
-        const t = tracks.find(x => x.id === parseInt(el.dataset.id)); if (t) t.volume = parseFloat(el.value);
+      container.querySelectorAll('.tsolo').forEach(el => el.addEventListener('click', () => {
+        const t = tracks.find(x => x.id === parseInt(el.dataset.id)); if (t) { pushUndo(); t.solo = !t.solo; renderEditTimeline(); }
       }));
-      container.querySelectorAll('.tdup').forEach(el => el.addEventListener('click', () => {
-        const t = tracks.find(x => x.id === parseInt(el.dataset.id));
-        if (!t) return;
-        tracks.push({ ...t, id: ++trackCounter, offset: t.offset + (t.regionEnd - t.regionStart) + 1 });
-        renderEditTimeline();
-        log('info', `📄 Track "${t.name}" diduplikat untuk transisi/layer.`);
+      container.querySelectorAll('.tpan').forEach(el => el.addEventListener('input', () => {
+        const t = tracks.find(x => x.id === parseInt(el.dataset.id)); if (t) t.pan = parseFloat(el.value);
       }));
-      container.querySelectorAll('.tdel').forEach(el => el.addEventListener('click', () => {
-        tracks = tracks.filter(x => x.id !== parseInt(el.dataset.id));
-        renderEditTimeline();
-        $('editStatus').textContent = `${tracks.length} track`;
+      container.querySelectorAll('.tfx').forEach(el => el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openFxPopover(parseInt(el.dataset.id), el);
       }));
+      container.querySelectorAll('.tmenu').forEach(el => el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllMenus();
+        const id = parseInt(el.dataset.id);
+        const rect = el.getBoundingClientRect();
+        const dd = document.createElement('div');
+        dd.className = 'thead-menu-dropdown';
+        dd.style.top = (rect.bottom + 4) + 'px';
+        dd.style.left = (rect.left - 80) + 'px';
+        dd.innerHTML = `<div data-act="rename">✏️ Ganti Nama</div><div data-act="dup">📄 Duplikat</div><div data-act="del">🗑️ Hapus</div>`;
+        document.body.appendChild(dd);
+        dd.querySelector('[data-act="rename"]').addEventListener('click', () => {
+          const t = tracks.find(x => x.id === id); if (!t) return;
+          const nn = prompt('Nama track baru:', t.name);
+          if (nn) { pushUndo(); t.name = nn; renderEditTimeline(); }
+          closeAllMenus();
+        });
+        dd.querySelector('[data-act="dup"]').addEventListener('click', () => {
+          const t = tracks.find(x => x.id === id); if (!t) return;
+          pushUndo();
+          tracks.push({ ...t, id: ++trackCounter, offset: t.offset + (t.regionEnd - t.regionStart) + 1 });
+          renderEditTimeline();
+          log('info', `📄 Track "${t.name}" diduplikat untuk transisi/layer.`);
+          closeAllMenus();
+        });
+        dd.querySelector('[data-act="del"]').addEventListener('click', () => {
+          pushUndo();
+          tracks = tracks.filter(x => x.id !== id);
+          renderEditTimeline();
+          $('editStatus').textContent = `${tracks.length} track`;
+          closeAllMenus();
+        });
+      }));
+
+      // Gain knob: drag vertikal untuk atur volume 0 - 1.5
+      container.querySelectorAll('.tgain').forEach(knob => {
+        knob.addEventListener('mousedown', (e) => {
+          const id = parseInt(knob.dataset.id);
+          const t = tracks.find(x => x.id === id);
+          if (!t) return;
+          const startY = e.clientY;
+          const startVol = t.volume;
+          function onMove(ev) {
+            const dy = (startY - ev.clientY) / 100;
+            t.volume = Math.min(1.5, Math.max(0, startVol + dy));
+            const angle = -130 + (t.volume / 1.5) * 260;
+            knob.querySelector('.knob-indicator').style.transform = `rotate(${angle}deg)`;
+          }
+          function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); pushUndo(); }
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        });
+      });
 
       // Drag region (geser posisi bebas)
       container.querySelectorAll('.edit-region').forEach(regionEl => {
         regionEl.addEventListener('mousedown', (e) => {
-          if (e.target.classList.contains('rhandle')) return; // biar resize handle yg nangkep
+          if (e.target.classList.contains('rhandle')) return;
           const id = parseInt(regionEl.dataset.id);
           const t = tracks.find(x => x.id === id);
           if (!t) return;
           const startX = e.clientX;
           const startOffset = t.offset;
+          let moved = false;
           regionEl.classList.add('dragging');
           function onMove(ev) {
+            moved = true;
             const dx = (ev.clientX - startX) / editPxPerSec;
             t.offset = Math.max(0, startOffset + dx);
             regionEl.style.left = (t.offset * editPxPerSec) + 'px';
@@ -1155,6 +1377,7 @@
             regionEl.classList.remove('dragging');
             document.removeEventListener('mousemove', onMove);
             document.removeEventListener('mouseup', onUp);
+            if (moved) pushUndo();
             renderEditTimeline();
           }
           document.addEventListener('mousemove', onMove);
@@ -1178,7 +1401,7 @@
             t.regionStart = newStart;
             renderEditTimeline();
           }
-          function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
+          function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); pushUndo(); }
           document.addEventListener('mousemove', onMove);
           document.addEventListener('mouseup', onUp);
         });
@@ -1198,37 +1421,83 @@
             t.regionEnd = Math.min(Math.max(origEnd + ds, t.regionStart + 0.3), t.duration);
             renderEditTimeline();
           }
-          function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
+          function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); pushUndo(); }
           document.addEventListener('mousemove', onMove);
           document.addEventListener('mouseup', onUp);
         });
       });
     }
 
+    // ---------- FX POPOVER PER TRACK (Denoise + Normalisasi cepat) ----------
+    function openFxPopover(trackId, anchorEl) {
+      document.querySelectorAll('.fx-popover').forEach(el => el.remove());
+      const t = tracks.find(x => x.id === trackId);
+      if (!t) return;
+      if (!t.fx) t.fx = { denoise: { enabled: false, strength: 20 }, normalize: { enabled: false, target: -14 } };
+      const rect = anchorEl.getBoundingClientRect();
+      const pop = document.createElement('div');
+      pop.className = 'fx-popover';
+      pop.style.top = (rect.bottom + 6) + 'px';
+      pop.style.left = Math.min(rect.left, window.innerWidth - 240) + 'px';
+      pop.innerHTML = `
+        <label><input type="checkbox" id="fxDenoiseChk" ${t.fx.denoise.enabled ? 'checked' : ''}> Denoise AI</label>
+        <input type="range" id="fxDenoiseVal" min="5" max="40" value="${t.fx.denoise.strength}">
+        <label><input type="checkbox" id="fxNormChk" ${t.fx.normalize.enabled ? 'checked' : ''}> Normalisasi Loudness</label>
+        <input type="range" id="fxNormVal" min="-18" max="-8" step="0.5" value="${t.fx.normalize.target}">
+      `;
+      document.body.appendChild(pop);
+      pop.addEventListener('click', (e) => e.stopPropagation());
+      pop.querySelector('#fxDenoiseChk').addEventListener('change', (e) => { pushUndo(); t.fx.denoise.enabled = e.target.checked; });
+      pop.querySelector('#fxDenoiseVal').addEventListener('input', (e) => { t.fx.denoise.strength = parseInt(e.target.value); });
+      pop.querySelector('#fxNormChk').addEventListener('change', (e) => { pushUndo(); t.fx.normalize.enabled = e.target.checked; });
+      pop.querySelector('#fxNormVal').addEventListener('input', (e) => { t.fx.normalize.target = parseFloat(e.target.value); });
+      setTimeout(() => document.addEventListener('click', function closer() { pop.remove(); document.removeEventListener('click', closer); }), 0);
+    }
+
+    $('fxQuickBtn').addEventListener('click', () => {
+      if (!tracks.length) { log('error', 'Belum ada track.'); return; }
+      openFxPopover(tracks[tracks.length - 1].id, $('fxQuickBtn'));
+    });
+    $('autoPitchBtn').addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelector('.nav-item[data-tab="dashboard"]').classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      $('tab-dashboard').classList.remove('hidden');
+      renderAll();
+      log('info', '🎹 Buka Dashboard → pilih lagu untuk atur Pitch Correction / Limit to Key di panel editor bawah.');
+    });
+    $('skipStartBtn').addEventListener('click', () => {
+      stopMixPreview();
+      $('editPlayhead').style.left = '150px';
+    });
+
     // ---------- PREVIEW MIX (Web Audio, real-time) ----------
-    $('editPlayBtn').addEventListener('click', () => {
+    function startMixPreview() {
       if (!tracks.length) { log('error', 'Belum ada track.'); return; }
       stopMixPreview();
       const ctx = getSharedCtx();
       mixStartCtxTime = ctx.currentTime + 0.1;
       tracks.forEach(t => {
-        if (t.muted) return;
+        if (isEffectivelyMuted(t)) return;
         const f = files.find(x => x.id === t.fileId);
         if (!f || !f.audioBuffer) return;
         const src = ctx.createBufferSource();
         src.buffer = f.audioBuffer;
         const gain = ctx.createGain();
         gain.gain.value = t.volume;
-        src.connect(gain).connect(ctx.destination);
+        const panner = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+        if (panner) { panner.pan.value = t.pan; src.connect(gain).connect(panner).connect(ctx.destination); }
+        else { src.connect(gain).connect(ctx.destination); }
         const dur = t.regionEnd - t.regionStart;
         src.start(mixStartCtxTime + t.offset, t.regionStart, dur);
         mixSources.push(src);
       });
       $('editPlayhead').style.display = 'block';
-      const wrap = $('editTimelineWrap');
+      isPlayingMix = true;
+      $('transportPlayBtn').innerHTML = '<i class="fa-solid fa-pause"></i>';
       function animatePlayhead() {
         const elapsed = ctx.currentTime - mixStartCtxTime;
-        const px = elapsed * editPxPerSec + 150;
+        const px = elapsed * editPxPerSec + 210;
         $('editPlayhead').style.left = px + 'px';
         if (elapsed < timelineTotalDuration() + 1) {
           mixPreviewRAF = requestAnimationFrame(animatePlayhead);
@@ -1238,21 +1507,60 @@
       }
       animatePlayhead();
       log('info', '▶️ Memutar preview mix multi-track...');
-    });
+    }
 
     function stopMixPreview() {
       mixSources.forEach(s => { try { s.stop(); } catch (e) {} });
       mixSources = [];
       if (mixPreviewRAF) cancelAnimationFrame(mixPreviewRAF);
       $('editPlayhead').style.display = 'none';
+      isPlayingMix = false;
+      $('transportPlayBtn').innerHTML = '<i class="fa-solid fa-play"></i>';
     }
-    $('editStopBtn').addEventListener('click', stopMixPreview);
+    $('transportPlayBtn').addEventListener('click', () => { isPlayingMix ? stopMixPreview() : startMixPreview(); });
 
-    // ---------- MIXDOWN & EKSPOR (ffmpeg filter_complex: atrim+adelay+amix) ----------
+    // ---------- AUTOMIX AI (auto-balance volume berdasar RMS tiap track) ----------
+    function computeRMS(buffer) {
+      const data = buffer.getChannelData(0);
+      let sum = 0;
+      const step = Math.max(1, Math.floor(data.length / 20000));
+      let n = 0;
+      for (let i = 0; i < data.length; i += step) { sum += data[i] * data[i]; n++; }
+      return Math.sqrt(sum / n);
+    }
+    $('autoMixBtn').addEventListener('click', () => {
+      if (!tracks.length) { log('error', 'Belum ada track untuk di-AutoMix.'); return; }
+      pushUndo();
+      const rmsList = tracks.map(t => {
+        const f = files.find(x => x.id === t.fileId);
+        return (f && f.audioBuffer) ? computeRMS(f.audioBuffer) : 0.1;
+      });
+      const targetRMS = rmsList.reduce((a, b) => a + b, 0) / rmsList.length;
+      tracks.forEach((t, i) => {
+        if (rmsList[i] > 0.0001) {
+          t.volume = Math.min(1.5, Math.max(0.1, targetRMS / rmsList[i]));
+        }
+      });
+      renderEditTimeline();
+      log('success', '🤖 AutoMix AI: volume tiap track diseimbangkan otomatis berdasarkan loudness.');
+    });
+
+    // ---------- MASTERING TOGGLE ----------
+    $('masteringToggle').addEventListener('change', (e) => { masteringEnabled = e.target.checked; });
+    $('masteringIntensity').addEventListener('input', (e) => {
+      masteringIntensity = parseInt(e.target.value);
+      $('masteringLabel').textContent = `Universal · ${masteringIntensity}`;
+    });
+    $('masterFader').addEventListener('input', (e) => {
+      masterVolumeDb = parseFloat(e.target.value);
+      $('masterFaderVal').textContent = `${masterVolumeDb.toFixed(1)} dB`;
+    });
+
+    // ---------- MIXDOWN & EKSPOR (ffmpeg filter_complex: atrim+pan+adelay+amix+mastering) ----------
     $('mixdownBtn').addEventListener('click', async () => {
       if (!loaded) { log('error', 'FFmpeg belum siap.'); return; }
       if (!tracks.length) { log('error', 'Belum ada track untuk di-mixdown.'); return; }
-      const active = tracks.filter(t => !t.muted);
+      const active = tracks.filter(t => !isEffectivelyMuted(t));
       if (!active.length) { log('error', 'Semua track di-mute.'); return; }
       $('mixdownBtn').disabled = true;
       $('editStatus').textContent = 'Mixdown berjalan...';
@@ -1270,11 +1578,23 @@
           await ffmpeg.writeFile(inName, data);
           inputArgs.push('-i', inName);
           const delayMs = Math.round(t.offset * 1000);
-          filterParts.push(`[${i}:a]atrim=start=${t.regionStart}:end=${t.regionEnd},asetpts=PTS-STARTPTS,volume=${t.volume},adelay=${delayMs}|${delayMs}[a${i}]`);
-          log('info', `[${i + 1}/${active.length}] ${t.name} — mulai ${t.offset.toFixed(1)}s, durasi ${(t.regionEnd - t.regionStart).toFixed(1)}s, vol ${t.volume}x`);
+          let chain = `atrim=start=${t.regionStart}:end=${t.regionEnd},asetpts=PTS-STARTPTS`;
+          if (t.fx && t.fx.denoise && t.fx.denoise.enabled) chain += `,afftdn=nr=${t.fx.denoise.strength}:nf=-40`;
+          if (t.fx && t.fx.normalize && t.fx.normalize.enabled) chain += `,loudnorm=I=${t.fx.normalize.target}:TP=-1:LRA=11`;
+          chain += `,volume=${t.volume},stereotools=balance_out=${t.pan},adelay=${delayMs}|${delayMs}`;
+          filterParts.push(`[${i}:a]${chain}[a${i}]`);
+          log('info', `[${i + 1}/${active.length}] ${t.name} — mulai ${t.offset.toFixed(1)}s, durasi ${(t.regionEnd - t.regionStart).toFixed(1)}s, vol ${t.volume.toFixed(2)}x, pan ${t.pan}`);
         }
         const mixInputs = active.map((_, i) => `[a${i}]`).join('');
-        const filterGraph = filterParts.join(';') + `;${mixInputs}amix=inputs=${active.length}:duration=longest:dropout_transition=3[mix]`;
+        let filterGraph = filterParts.join(';') + `;${mixInputs}amix=inputs=${active.length}:duration=longest:dropout_transition=3[mixed]`;
+        // Master chain: fader + mastering (loudnorm target berdasar intensitas + limiter)
+        let masterChain = `[mixed]volume=${masterVolumeDb}dB`;
+        if (masteringEnabled) {
+          const targetLufs = -20 + (masteringIntensity / 100) * 8; // 50 -> -16 LUFS
+          masterChain += `,loudnorm=I=${targetLufs}:TP=-1:LRA=9,alimiter=limit=0.97:attack=3:release=30`;
+        }
+        masterChain += `[mix]`;
+        filterGraph += `;${masterChain}`;
         const outName = 'mixdown.mp3';
         await ffmpeg.exec([...inputArgs, '-filter_complex', filterGraph, '-map', '[mix]', outName]);
         const outData = await ffmpeg.readFile(outName);
@@ -1287,9 +1607,8 @@
         await processFile(newFile);
         for (let i = 0; i < active.length; i++) await ffmpeg.deleteFile(`mt_${i}.${active[i].name.split('.').pop() || 'mp3'}`).catch(() => {});
         await ffmpeg.deleteFile(outName).catch(() => {});
-        log('success', `✅ Mixdown selesai: ${lastMixdownName}`);
-        $('editStatus').textContent = 'Mixdown selesai, siap didengarkan/didownload.';
-        $('playMixdownBtn').disabled = false;
+        log('success', `✅ Mixdown selesai${masteringEnabled ? ' (Mastering aktif: Universal · ' + masteringIntensity + ')' : ''}: ${lastMixdownName}`);
+        $('editStatus').textContent = 'Mixdown selesai, siap didownload.';
         $('downloadMixdownBtn').disabled = false;
         renderAll();
       } catch (e) {
@@ -1300,10 +1619,6 @@
       updateProgress('Siap');
     });
 
-    $('playMixdownBtn').addEventListener('click', () => {
-      if (!lastMixdownUrl) return;
-      togglePreview('mixdown', lastMixdownUrl, 0, null);
-    });
     $('downloadMixdownBtn').addEventListener('click', () => {
       if (!lastMixdownUrl) return;
       const a = document.createElement('a');
