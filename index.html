@@ -1,693 +1,459 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CutPro Studio — Video Editor</title>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',system-ui,sans-serif; }
-  :root {
-    --bg:#0d0f14; --panel:#151821; --panel2:#1c2030; --border:#2a2f42;
-    --accent:#00e5c7; --accent2:#7b61ff; --text:#e8eaf2; --muted:#8a90a6;
-  }
-  body { background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
-  ::-webkit-scrollbar { height:8px; width:8px; } ::-webkit-scrollbar-thumb { background:#333a52; border-radius:4px; }
-
-  /* TOPBAR */
-  .topbar { height:52px; background:var(--panel); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 16px; gap:12px; flex-shrink:0;}
-  .logo { font-weight:800; font-size:18px; letter-spacing:-0.5px; }
-  .logo span { color:var(--accent); }
-  .topbar .spacer { flex:1; }
-  .btn { background:var(--panel2); border:1px solid var(--border); color:var(--text); padding:7px 14px; border-radius:8px; cursor:pointer; font-size:13px; transition:.15s; }
-  .btn:hover { border-color:var(--accent); color:var(--accent); }
-  .btn-primary { background:linear-gradient(135deg,var(--accent),#00b89c); color:#04110e; font-weight:700; border:none; }
-  .btn-primary:hover{ filter:brightness(1.1); color:#04110e;}
-
-  /* LAYOUT */
-  .main { flex:1; display:flex; overflow:hidden; min-height:0;}
-  .sidebar { width:64px; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; align-items:center; padding-top:12px; gap:4px; flex-shrink:0;}
-  .tab { width:52px; height:52px; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; cursor:pointer; color:var(--muted); font-size:10px; transition:.15s; }
-  .tab:hover,.tab.active { background:rgba(0,229,199,.08); color:var(--accent); }
-  .tab svg { width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.8; }
-
-  /* LIBRARY */
-  .library { width:280px; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0;}
-  .library h3 { font-size:13px; padding:14px 16px 8px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
-  .dropzone { margin:4px 12px 12px; border:2px dashed var(--border); border-radius:12px; padding:22px 12px; text-align:center; color:var(--muted); font-size:12px; cursor:pointer; transition:.2s; flex-shrink:0;}
-  .dropzone:hover,.dropzone.dragover { border-color:var(--accent); color:var(--accent); background:rgba(0,229,199,.04); }
-  .media-list { flex:1; overflow-y:auto; padding:0 12px 12px; display:flex; flex-direction:column; gap:8px; }
-  .media-item { display:flex; align-items:center; gap:10px; background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:8px; cursor:grab; transition:.15s; }
-  .media-item:hover { border-color:var(--accent); transform:translateX(3px); }
-  .media-thumb { width:56px; height:36px; border-radius:6px; object-fit:cover; background:#000; flex-shrink:0; display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--accent);}
-  .media-name { font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:150px;}
-  .media-dur { font-size:10px; color:var(--muted); }
-
-  /* CENTER */
-  .center { flex:1; display:flex; flex-direction:column; min-width:0; }
-  .preview-area { flex:1; display:flex; align-items:center; justify-content:center; position:relative; min-height:0;
-    background: radial-gradient(circle at 50% 40%, #161a26 0%, #0a0c11 100%); }
-  .canvas-wrap { position:relative; max-width:88%; max-height:88%; aspect-ratio:16/9; background:#000; border-radius:10px;
-    box-shadow:0 20px 60px rgba(0,0,0,.6); overflow:hidden; }
-  canvas { width:100%; height:100%; display:block; }
-  .empty-hint { position:absolute; inset:0; color:var(--muted); font-size:13px; text-align:center; display:flex; align-items:center; justify-content:center; pointer-events:none;}
-
-  .player-controls { height:48px; background:var(--panel); border-top:1px solid var(--border); display:flex; align-items:center; gap:10px; padding:0 16px; flex-shrink:0;}
-  .icon-btn { background:none; border:none; color:var(--text); cursor:pointer; min-width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; transition:.15s; font-size:14px;}
-  .icon-btn:hover { background:var(--panel2); color:var(--accent); }
-  .time { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; min-width:96px; text-align:center;}
-  input[type=range]{ accent-color:var(--accent); }
-
-  /* INSPECTOR */
-  .inspector { width:270px; background:var(--panel); border-left:1px solid var(--border); padding:16px; overflow-y:auto; flex-shrink:0;}
-  .inspector h3 { font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:14px; }
-  .field { margin-bottom:13px; }
-  .field label { font-size:11px; color:var(--muted); display:block; margin-bottom:5px; }
-  .field input[type=text],.field input[type=number],.field select { width:100%; background:var(--panel2); border:1px solid var(--border); border-radius:8px; color:var(--text); padding:7px 10px; font-size:13px; outline:none;}
-  .field input:focus,.field select:focus { border-color:var(--accent); }
-  .row2 { display:flex; gap:8px; }
-  .swatches { display:flex; gap:8px; flex-wrap:wrap; }
-  .swatch { width:28px; height:28px; border-radius:8px; cursor:pointer; border:2px solid transparent; }
-  .swatch.active { border-color:var(--accent); }
-  .filter-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-  .filter-chip { background:var(--panel2); border:1px solid var(--border); border-radius:8px; padding:7px 4px; font-size:11px; text-align:center; cursor:pointer; transition:.15s; }
-  .filter-chip:hover,.filter-chip.active { border-color:var(--accent); color:var(--accent); }
-  .sec-title { font-size:11px; color:var(--accent); margin:14px 0 8px; text-transform:uppercase; letter-spacing:.5px; border-top:1px solid var(--border); padding-top:12px;}
-
-  /* TIMELINE */
-  .timeline { height:210px; background:var(--panel); border-top:1px solid var(--border); display:flex; flex-direction:column; flex-shrink:0;}
-  .tl-head { height:36px; display:flex; align-items:center; padding:0 12px; gap:8px; border-bottom:1px solid var(--border); flex-shrink:0;}
-  .tl-head span.tl-name { font-size:12px; font-weight:600; }
-  .tl-tools { margin-left:auto; display:flex; gap:4px; align-items:center;}
-  .tracks-scroll { flex:1; overflow:auto; position:relative; }
-  .tracks-inner { position:relative; min-width:max(100%, calc(80px + var(--tl-width))); }
-  .ruler { position:absolute; top:0; left:80px; right:0; height:18px; z-index:3; pointer-events:none; }
-  .track { height:56px; margin:24px 0 0 0; background:var(--panel2); border-radius:8px; position:relative; border:1px solid var(--border); width:var(--tl-width); }
-  .track-label { position:sticky; float:left; height:100%; width:70px; display:flex; align-items:center; justify-content:center;
-    font-size:10px; color:var(--muted); z-index:2; background:linear-gradient(90deg,var(--panel) 55%,transparent);
-    border-right:1px solid var(--border); border-radius:8px 0 0 8px;}
-  .track-label small{display:block;font-size:8px;color:#555c74;text-align:center}
-  .clip { position:absolute; top:4px; bottom:4px; border-radius:6px; cursor:grab; overflow:hidden; display:flex; align-items:center; padding:0 8px;
-    font-size:10px; white-space:nowrap; user-select:none; box-shadow:0 2px 8px rgba(0,0,0,.4); }
-  .layer-badge{position:absolute;top:2px;left:4px;font-size:8px;background:rgba(0,0,0,.45);padding:1px 5px;border-radius:4px;}
-  .clip.video { background:linear-gradient(135deg,#134e4a,#0f766e); border:1px solid #14b8a6; }
-  .clip.audio { background:linear-gradient(135deg,#3b0764,#6d28d9); border:1px solid #8b5cf6; }
-  .clip.text  { background:linear-gradient(135deg,#7c2d12,#ea580c); border:1px solid #fb923c; }
-  .waveform{position:absolute;inset:0;opacity:.35;background:repeating-linear-gradient(90deg,#fff 0 1px,transparent 1px 7px);mask:linear-gradient(#000,#000)}
-  .clip.selected { outline:2px solid var(--accent); outline-offset:1px; z-index:2;}
-  .clip-handle { position:absolute; right:0; top:0; bottom:0; width:9px; cursor:ew-resize; background:rgba(255,255,255,.25); }
-  .clip-handle.left{left:0;right:auto;}
-
-  /* Toast & modal */
-  #toast-zone{position:fixed;top:64px;right:16px;z-index:999;display:flex;flex-direction:column;gap:8px;}
-  .toast{background:var(--accent);color:#04110e;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:700;animation:slidein .25s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);}
-  @keyframes slidein{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
-  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:998;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
-  .modal{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:28px;width:340px;text-align:center;}
-  .spinner{width:44px;height:44px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;margin:0 auto 16px;animation:spin 1s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg)}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎧 Lab Normalisasi Nakal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { background: #0b1024; color: #e4e4e7; font-family: system-ui, sans-serif; }
+    .glass { background: rgba(19,24,56,.6); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.08); }
+    .slider-label { font-size: 11px; font-weight: 600; color: #a1a1aa; display: flex; justify-content: space-between; }
+    input[type="range"] { -webkit-appearance: none; width: 100%; height: 4px; background: #27272a; border-radius: 2px; outline: none; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; background: #7c5cff; border-radius: 50%; cursor: pointer; }
+    .btn-primary { background: linear-gradient(135deg, #7c5cff, #21d4fd); color: #fff; font-weight: 600; padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; transition: all .2s; }
+    .btn-primary:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(124,92,255,.4); }
+    .btn-primary:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    .btn-ghost { background: transparent; color: #a1a1aa; padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); cursor: pointer; transition: all .2s; }
+    .btn-ghost:hover { color: #e4e4e7; border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.05); }
+    .log-console { background: #000; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 11px; max-height: 140px; overflow-y: auto; border: 1px solid rgba(255,255,255,.04); }
+    .log-line { display: flex; gap: 8px; }
+    .log-tag { font-weight: 700; width: 60px; flex-shrink: 0; }
+    .log-tag.info { color: #60a5fa; }
+    .log-tag.success { color: #4ade80; }
+    .log-tag.error { color: #f87171; }
+    .log-tag.process { color: #fbbf24; }
+    .upload-zone { border: 1.5px dashed rgba(255,255,255,.2); transition: all .3s; cursor: pointer; background: rgba(255,255,255,.02); padding: 20px; border-radius: 12px; text-align: center; }
+    .upload-zone:hover { border-color: rgba(124,92,255,.5); background: rgba(124,92,255,.05); }
+    .badge { font-size: 10px; background: rgba(255,255,255,.05); padding: 2px 8px; border-radius: 20px; border: 1px solid rgba(255,255,255,.08); }
+  </style>
 </head>
-<body>
+<body class="min-h-screen p-4 flex items-start justify-center">
 
-<div class="topbar">
-  <div class="logo">Cut<span>Pro</span> Studio ✂️</div>
-  <div class="spacer"></div>
-  <button class="btn" onclick="undo()">↩ Undo</button>
-  <button class="btn" onclick="saveProject()">💾 Simpan</button>
-  <button class="btn btn-primary" onclick="startExport()">⬇ Render Video (.webm)</button>
-</div>
+  <div class="w-full max-w-5xl">
 
-<div class="main">
-  <div class="sidebar">
-    <div class="tab active" data-panel="media"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M2 9h20M7 18l2-4h6l2 4"/></svg>Media</div>
-    <div class="tab" data-panel="text"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3M12 4v16M9 20h6"/></svg>Teks</div>
-    <div class="tab" data-panel="filters"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 10h.01M16 10h.01M9 15c1 .8 2 1.2 3 1.2"/></svg>Filter</div>
-    <div class="tab" data-panel="transition"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="9" height="14" rx="1"/><rect x="13" y="5" width="9" height="14" rx="1" stroke-dasharray="3 2"/></svg>Transisi</div>
-    <div class="tab" data-panel="audio"><svg viewBox="0 0 24 24"><path d="M9 18V6l12-2v12"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>Audio</div>
-  </div>
+    <!-- HEADER -->
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight">🎧 Lab Normalisasi <span class="text-indigo-400">Nakal</span></h1>
+        <p class="text-xs text-zinc-500">Uji coba parameter FFmpeg + simulasi PlaybackSpeed Roblox</p>
+      </div>
+      <div id="statusBadge" class="badge text-zinc-500">⏳ Siap</div>
+    </div>
 
-  <div class="library">
-    <h3 id="lib-title">Pustaka Media</h3>
-    <div class="dropzone" id="dropzone">📂 Tarik file ke sini<br><small>(video / gambar / audio)</small></div>
-    <input type="file" id="file-input" multiple accept="video/*,image/*,audio/*" hidden>
-    <div class="media-list" id="media-list"></div>
-  </div>
-
-  <div class="center">
-    <div class="preview-area">
-      <div class="canvas-wrap">
-        <canvas id="preview" width="1280" height="720"></canvas>
-        <div class="empty-hint" id="empty-hint">Tambahkan media dari panel kiri 👈<br>atau tekan <b>Space</b> untuk play</div>
+    <!-- UPLOAD ZONE -->
+    <div class="upload-zone mb-4" id="uploadZone">
+      <input type="file" id="audioInput" accept=".mp3,.wav,.ogg,.flac,.m4a" class="hidden">
+      <div id="uploadText">
+        <i class="fa-solid fa-cloud-arrow-up text-2xl text-zinc-600"></i>
+        <p class="text-sm font-medium mt-1">Tarik & lepas, atau klik untuk upload</p>
+        <p class="text-[10px] text-zinc-600" id="fileInfo">Belum ada file</p>
       </div>
     </div>
-    <div class="player-controls">
-      <button class="icon-btn" onclick="seekTo(0)">⏮</button>
-      <button class="icon-btn" id="play-btn" onclick="togglePlay()">▶</button>
-      <span class="time" id="time-display">00:00.0 / 00:00.0</span>
-      <input type="range" id="scrubber" min="0" max="1000" value="0" style="flex:1;">
-      <span style="font-size:11px;color:var(--muted)">🔊</span>
-      <input type="range" id="master-vol" min="0" max="100" value="100" style="width:70px;">
-    </div>
-  </div>
 
-  <div class="inspector">
-    <h3 id="insp-title">Properti</h3>
-    <div id="insp-empty" style="font-size:12px;color:var(--muted)">Pilih clip di timeline untuk mengedit properti.<br><br><b style="color:var(--text)">⌨️ Shortcut:</b><br>Space = Play/Pause<br>Delete = Hapus clip<br>Ctrl+D = Duplikat<br>←/→ = Geser frame</div>
-    <div id="insp-body" hidden>
-      <div class="field"><label>Konten Teks</label><input type="text" id="prop-text" placeholder="Ketik teks..."></div>
-      <div class="sec-title">🎨 Tampilan</div>
-      <div class="field" id="fld-font"><label>Ukuran Font</label><input type="number" id="prop-size" min="10" max="300" value="64"></div>
-      <div class="field" id="fld-color"><label>Warna</label><div class="swatches" id="color-swatches"></div></div>
-      <div class="field" id="fld-filter"><label>Filter Warna</label><div class="filter-grid" id="filter-grid"></div></div>
-      <div class="field" id="fld-intensity"><label>Intensitas Filter: <span id="int-val">50</span>%</label><input type="range" id="prop-intensity" min="0" max="100" value="50" style="width:100%"></div>
-      <div class="field"><label>Opacity: <span id="op-val">100</span>%</label><input type="range" id="prop-opacity" min="0" max="100" value="100" style="width:100%"></div>
-      <div class="sec-title">📐 Transformasi</div>
-      <div class="field row2">
-        <div><label>Posisi X (%)</label><input type="number" id="prop-x" min="-50" max="150" value="50"></div>
-        <div><label>Posisi Y (%)</label><input type="number" id="prop-y" min="-50" max="150" value="50"></div>
+    <!-- MAIN GRID: PARAMETER + PLAYBACK -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+      <!-- KOLOM KIRI: PARAMETER -->
+      <div class="lg:col-span-2 glass rounded-xl p-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <!-- Speed -->
+          <div>
+            <div class="slider-label"><span>Speed Convert</span><span id="speedVal">3.0x</span></div>
+            <input type="range" id="speedSlider" min="2.0" max="10.0" step="0.1" value="3.0">
+            <p class="text-[9px] text-zinc-600 mt-0.5">Simulasi Special (2.0 – 10.0x)</p>
+          </div>
+
+          <!-- Lowpass Pre-Filter -->
+          <div>
+            <div class="slider-label"><span>Lowpass Pre-Filter</span><span id="lowpassVal">OFF</span></div>
+            <input type="range" id="lowpassSlider" min="0" max="18000" step="100" value="0">
+            <p class="text-[9px] text-zinc-600 mt-0.5">0 = OFF, potong frekuensi tinggi</p>
+          </div>
+
+          <!-- High-Shelf Boost -->
+          <div>
+            <div class="slider-label"><span>High-Shelf Boost (5kHz)</span><span id="hshelfVal">0 dB</span></div>
+            <input type="range" id="hshelfSlider" min="-6" max="6" step="0.5" value="0">
+            <p class="text-[9px] text-zinc-600 mt-0.5">+dB = lebih cerah, -dB = redup</p>
+          </div>
+
+          <!-- Loudnorm Target -->
+          <div>
+            <div class="slider-label"><span>Loudnorm Target</span><span id="loudnormVal">-14 LUFS</span></div>
+            <input type="range" id="loudnormSlider" min="-18" max="-8" step="0.5" value="-14">
+            <p class="text-[9px] text-zinc-600 mt-0.5">Semakin rendah → lebih pelan</p>
+          </div>
+
+          <!-- Limiter Mode -->
+          <div class="md:col-span-2 flex items-center gap-4">
+            <span class="text-xs text-zinc-400 font-medium">Limiter Mode:</span>
+            <div class="flex gap-2">
+              <button class="btn-ghost text-xs py-1 px-3 border-zinc-700" id="limiterSoft">Soft</button>
+              <button class="btn-ghost text-xs py-1 px-3 border-indigo-400 text-indigo-300" id="limiterHard">Hard</button>
+            </div>
+            <span class="text-[10px] text-zinc-600" id="limiterLabel">Hard</span>
+          </div>
+
+        </div>
+
+        <!-- AKSI -->
+        <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-white/5">
+          <button class="btn-primary" id="processBtn" disabled><i class="fa-solid fa-wand-magic-sparkles"></i> Proses & Normalisasi</button>
+          <button class="btn-ghost text-xs" id="resetBtn"><i class="fa-solid fa-rotate"></i> Reset</button>
+          <div class="text-[10px] text-zinc-600 ml-auto" id="progressText">Belum diproses</div>
+        </div>
       </div>
-      <div class="field row2">
-        <div><label>Scale (%)</label><input type="number" id="prop-scale" min="10" max="400" value="100"></div>
-        <div><label>Rotasi (°)</label><input type="number" id="prop-rotate" min="-180" max="180" value="0"></div>
+
+      <!-- KOLOM KANAN: PLAYBACK -->
+      <div class="glass rounded-xl p-4 flex flex-col gap-3">
+        <div class="text-xs font-semibold text-zinc-400">🎵 A/B Playback</div>
+        <div class="flex flex-col gap-2">
+          <button class="btn-ghost w-full justify-center text-sm py-2" id="playOriginal" disabled>
+            <i class="fa-solid fa-circle-play text-emerald-400"></i> Putar Original
+          </button>
+          <button class="btn-ghost w-full justify-center text-sm py-2 border-indigo-400/30 text-indigo-300" id="playProcessed" disabled>
+            <i class="fa-solid fa-circle-play text-indigo-400"></i> Putar Normalized (PlaybackSpeed = 1/speed)
+          </button>
+          <button class="btn-ghost w-full justify-center text-sm py-2 text-zinc-500" id="stopPlayback">
+            <i class="fa-solid fa-stop"></i> Stop Semua
+          </button>
+        </div>
+        <div class="text-[10px] text-zinc-600 text-center mt-1" id="playbackStatus">Pilih file & proses dulu</div>
+        <!-- Hidden audio elements -->
+        <audio id="audioOriginal" style="display:none"></audio>
+        <audio id="audioProcessed" style="display:none"></audio>
       </div>
-      <div class="sec-title">🔊 Audio & Waktu</div>
-      <div class="field" id="fld-volume"><label>Volume: <span id="vol-val">100</span>%</label><input type="range" id="prop-volume" min="0" max="100" value="100" style="width:100%"></div>
-      <div class="field" id="fld-speed"><label>Kecepatan: <span id="spd-val">1.0</span>x</label><input type="range" id="prop-speed" min="25" max="300" value="100" style="width:100%"></div>
-      <div class="field"><label>Transisi Masuk</label>
-        <select id="prop-transition"><option value="none">Tanpa transisi</option><option value="fade">Fade In</option><option value="slide">Slide dari kanan</option><option value="zoom">Zoom In</option></select>
+    </div>
+
+    <!-- LOG CONSOLE -->
+    <div class="mt-4 glass rounded-xl p-3">
+      <div class="flex justify-between items-center mb-1.5">
+        <span class="text-xs font-semibold text-zinc-500"><i class="fa-solid fa-terminal"></i> Activity Log</span>
+        <button class="text-[10px] text-zinc-600 hover:text-zinc-300" id="clearLog">Clear</button>
       </div>
-      <div class="field"><label>Durasi Transisi (detik)</label><input type="number" id="prop-trandur" min="0.1" step="0.1" max="3" value="0.5"></div>
-      <div class="field"><label>Durasi Clip (detik)</label><input type="number" id="prop-duration" min="0.5" step="0.1" value="5"></div>
+      <div id="logConsole" class="log-console"></div>
     </div>
   </div>
-</div>
 
-<div class="timeline">
-  <div class="tl-head">
-    <span class="tl-name">🎬 Timeline</span>
-    <div class="tl-tools">
-      <button class="btn" style="padding:4px 10px;font-size:11px" onclick="splitSelected()">✂ Split</button>
-      <button class="btn" style="padding:4px 10px;font-size:11px" onclick="deleteSelected()">🗑 Hapus</button>
-      <button class="btn" style="padding:4px 10px;font-size:11px" onclick="duplicateSelected()">⧉ Duplikat</button>
-      <span style="font-size:11px;color:var(--muted)">🔍 Zoom</span>
-      <input type="range" id="zoom-slider" min="20" max="200" value="60" style="width:110px;">
-    </div>
-  </div>
-  <div class="tracks-scroll" id="tracks-scroll">
-    <div class="tracks-inner" id="tracks-inner">
-      <div class="ruler" id="ruler"></div>
-      <div class="track" data-type="video"><div class="track-label">VIDEO<small>+ layer</small></div></div>
-      <div class="track" data-type="audio"><div class="track-label">AUDIO<small>+ layer</small></div></div>
-      <div class="track" data-type="text"><div class="track-label">TEKS<small>+ layer</small></div></div>
-    </div>
-  </div>
-</div>
+  <!-- FFmpeg WASM -->
+  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+  <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
 
-<div id="toast-zone"></div>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<script>
-/* ================= STATE ================= */
-let media=[], clips=[], selectedClip=null;
-let playing=false, currentTime=0, lastT=0, pxPerSec=60, masterVolume=1;
-const $=s=>document.querySelector(s);
-const tracksInner=$("#tracks-inner"), scrollEl=$("#tracks-scroll");
+  <script>
+    // ============================================
+    // SETUP
+    // ============================================
+    const FFMPEG_CORE_VERSION = '0.12.6';
+    const FFMPEG_VERSION = '0.12.10';
+    const { FFmpeg } = FFmpegWASM;
+    const { toBlobURL, fetchFile } = FFmpegUtil;
 
-/* ================= HELPERS ================= */
-function toast(msg){
-  const t=document.createElement("div");t.className="toast";t.textContent=msg;
-  $("#toast-zone").appendChild(t);setTimeout(()=>t.remove(),2400);
-}
+    const $ = id => document.getElementById(id);
 
-/* ================= TABS & LIBRARY ================= */
-document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
-  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-  t.classList.add("active");
-  const p=t.dataset.panel;
-  $("#lib-title").textContent={media:"Pustaka Media",text:"Tambah Teks",filters:"Filter Preset",transition:"Transisi Preset",audio:"Audio"}[p];
-  $("#dropzone").hidden=p!=="media";
-  renderLibrary(p);
-});
+    // DOM refs
+    const uploadZone = $('uploadZone');
+    const audioInput = $('audioInput');
+    const fileInfo = $('fileInfo');
+    const processBtn = $('processBtn');
+    const resetBtn = $('resetBtn');
+    const progressText = $('progressText');
+    const statusBadge = $('statusBadge');
+    const logConsole = $('logConsole');
+    const clearLog = $('clearLog');
 
-function renderLibrary(panel){
-  const list=$("#media-list");list.innerHTML="";
-  if(panel==="media"){
-    media.forEach(m=>{
-      const el=document.createElement("div");el.className="media-item";
-      el.innerHTML=`${m.type==='image'?`<img class="media-thumb" src="${m.url}">`:`<div class="media-thumb">${m.type==='video'?'🎬':'🎵'}</div>`}<div><div class="media-name">${m.name}</div><div class="media-dur">${m.duration.toFixed(1)}s • ${m.type}</div></div>`;
-      el.draggable=true;
-      el.ondragstart=e=>e.dataTransfer.setData("mediaIndex",media.indexOf(m));
-      list.appendChild(el);
-    });
-    if(!media.length){list.innerHTML=`<div style="font-size:11px;color:var(--muted);text-align:center;padding:16px">Belum ada media.<br>Tarik file ke dropzone di atas.</div>`;}
-  }else if(panel==="text"){
-    [["Judul Besar",120],["Subjudul",64],["Caption Kecil",40]].forEach(([name,sz])=>{
-      const el=document.createElement("div");el.className="media-item";el.draggable=true;
-      el.innerHTML=`<div class="media-thumb">T</div><div><div class="media-name">${name}</div><div class="media-dur">drag ke track TEKS • ${sz}px</div></div>`;
-      el.ondragstart=()=>window.__dragText={name,size:sz};
-      list.appendChild(el);
-    });
-  }else if(panel==="filters"){
-    ["Grayscale","Sepia","Invert","Blur","Bright","Contrast","Warm","Cold"].forEach(f=>{
-      const el=document.createElement("div");el.className="filter-chip";el.textContent=f.toLowerCase();el.style.cursor="grab";el.draggable=true;
-      el.ondragstart=()=>window.__dragFilter=f.toLowerCase();
-      list.appendChild(el);
-    });
-  }else if(panel==="transition"){
-    ["fade","slide","zoom"].forEach(tr=>{
-      const el=document.createElement("div");el.className="filter-chip";el.textContent=tr.toUpperCase();el.style.cursor="grab";el.draggable=true;
-      el.ondragstart=()=>window.__dragTransition=tr;
-      list.appendChild(el);
-    });
-    const info=document.createElement("div");info.style.cssText="font-size:11px;color:var(--muted)";
-    info.textContent="Drag ke clip untuk memberi efek masuk.";
-    list.prepend(info);
-  }else{
-    const info=document.createElement("div");info.style.cssText="font-size:11px;color:var(--muted)";
-    info.innerHTML="Tarik file audio lewat tab <b>Media</b>, lalu drag ke track AUDIO.<br><br>Atur volume & kecepatan tiap clip di panel kanan.";
-    list.appendChild(info);
-  }
-}
+    const speedSlider = $('speedSlider');
+    const speedVal = $('speedVal');
+    const lowpassSlider = $('lowpassSlider');
+    const lowpassVal = $('lowpassVal');
+    const hshelfSlider = $('hshelfSlider');
+    const hshelfVal = $('hshelfVal');
+    const loudnormSlider = $('loudnormSlider');
+    const loudnormVal = $('loudnormVal');
+    const limiterSoft = $('limiterSoft');
+    const limiterHard = $('limiterHard');
+    const limiterLabel = $('limiterLabel');
 
-/* ================= FILE UPLOAD ================= */
-$("#dropzone").onclick=()=>$("#file-input").click();
-$("#dropzone").ondragover=e=>{e.preventDefault();$("#dropzone").classList.add("dragover");};
-$("#dropzone").ondragleave=()=>$("#dropzone").classList.remove("dragover");
-$("#dropzone").ondrop=e=>{e.preventDefault();$("#dropzone").classList.remove("dragover");handleFiles(e.dataTransfer.files);};
-$("#file-input").onchange=e=>handleFiles(e.target.files);
+    const playOriginal = $('playOriginal');
+    const playProcessed = $('playProcessed');
+    const stopPlayback = $('stopPlayback');
+    const playbackStatus = $('playbackStatus');
+    const audioOrig = $('audioOriginal');
+    const audioProc = $('audioProcessed');
 
-function handleFiles(files){
-  [...files].forEach(f=>{
-    const url=URL.createObjectURL(f);
-    let type=f.type.startsWith("video")?"video":f.type.startsWith("image")?"image":"audio";
-    let duration=type==="image"?5:0;
-    if(type!=="image"){
-      const probe=document.createElement(type==="audio"?"audio":"video");
-      probe.preload="metadata";probe.src=url;
-      probe.onloadedmetadata=()=>{
-        const m=media.find(x=>x.url===url);
-        if(m){m.duration=probe.duration||5;m.width=probe.videoWidth;m.height=probe.videoHeight;}
-        renderLibrary("media");
-      };
+    let ffmpeg = null;
+    let loaded = false;
+    let originalFile = null;
+    let processedBlob = null;
+    let processedUrl = null;
+    let originalUrl = null;
+    let currentSpeed = 3.0;
+    let limiterMode = 'hard';
+
+    // ============================================
+    // LOGGING
+    // ============================================
+    function log(tag, msg) {
+      const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
+      const row = document.createElement('div');
+      row.className = 'log-line';
+      const cls = tag.toLowerCase();
+      row.innerHTML = `<span class="log-tag ${cls}">[${tag.toUpperCase()}]</span><span class="text-zinc-500">${time}</span><span class="text-zinc-300">${msg}</span>`;
+      logConsole.appendChild(row);
+      logConsole.scrollTop = logConsole.scrollHeight;
     }
-    media.push({name:f.name,type,url,duration});
-  });
-  $("#empty-hint").style.display="none";
-  renderLibrary("media");
-  toast(`${files.length} file ditambahkan ✅`);
-}
 
-/* ================= TIMELINE DND ================= */
-tracksInner.querySelectorAll(".track").forEach(track=>{
-  track.ondragover=e=>e.preventDefault();
-  track.ondrop=e=>{
-    e.preventDefault();
-    const rect=track.getBoundingClientRect();
-    const start=Math.max(0,(e.clientX-rect.left)/pxPerSec);
-    const mi=e.dataTransfer.getData("mediaIndex");
-    const tt=track.dataset.type;
-    if(mi!==""){
-      const m=media[+mi];
-      const allowed=m.type==="audio"?"audio":"video";
-      if(tt!==allowed)return;
-      addClip({type:m.type==="audio"?"audio":m.type,start,duration:m.duration,name:m.name,src:m.url,
-        volume:100,speed:100,x:50,y:50,scale:100,rotate:0,opacity:100,filter:"none",intensity:50,
-        transition:"none",trandur:.5});
-    }else if(window.__dragText&&tt==="text"){
-      addClip({type:"text",start,duration:4,name:window.__dragText.name,text:window.__dragText.name,
-        size:window.__dragText.size,color:"#ffffff",x:50,y:50,scale:100,rotate:0,opacity:100,
-        transition:"none",trandur:.5});
-    }else if(window.__dragTransition&&tt==="video"){
-      const target=topClipAt(tt,start);
-      if(target){target.transition=window.__dragTransition;selectClip(target.id);toast(`Transisi "${window.__dragTransition}" → ${target.name}`);}
+    function updateStatus(msg, type = 'info') {
+      statusBadge.textContent = msg;
+      statusBadge.style.color = type === 'error' ? '#f87171' : type === 'success' ? '#4ade80' : '#a1a1aa';
     }
-    // filters apply to topmost video/image clip at drop point
-    if(window.__dragFilter){
-      const target=(selectedClip&&clips.find(c=>c.id===selectedClip&&c.type!=="text"&&c.type!=="audio"))||topClipAt("video",start)||topClipAt("image",start);
-      if(target&&target.type!=="audio"&&target.type!=="text"){target.filter=window.__dragFilter;selectClip(target.id);toast(`Filter "${window.__dragFilter}" diterapkan 🎨`);}
-    }
-    window.__dragText=window.__dragFilter=window.__dragTransition=null;
-    renderTracks();drawFrame(currentTime);
-  };
-});
-function topClipAt(type,t){
-  return [...clips].reverse().find(c=>c.type===type&&t>=c.start&&t<=c.start+c.duration);
-}
-function addClip(c){
-  c.id=Date.now()+Math.random();
-  if(!("volume"in c))c.volume=100;
-  if(!("speed"in c))c.speed=100;
-  if(!("opacity"in c))c.opacity=100;
-  if(!("x"in c)){c.x=50;c.y=50;c.scale=100;c.rotate=0;}
-  if(!("transition"in c)){c.transition="none";c.trandur=.5;}
-  clips.push(c);
-  selectClip(c.id);
-  updateRuler();
-}
 
-/* ================= TIMELINE RENDER ================= */
-function updateRuler(){
-  const total=Math.max(projectDuration(),30);
-  tracksInner.style.setProperty("--tl-width",(total*pxPerSec)+"px");
-  const ruler=$("#ruler");ruler.innerHTML="";
-  const step=pxPerSec>=120?1:pxPerSec>=60?2:5;
-  for(let s=0;s<=total;s+=step){
-    const tick=document.createElement("div");
-    tick.style.cssText=`position:absolute;left:${s*pxPerSec}px;top:0;height:100%;font-size:8px;color:var(--muted);border-left:1px solid #2a2f42aa;padding-left:3px`;
-    tick.textContent=s+"s";
-    ruler.appendChild(tick);
-  }
-  // playhead
-  let ph=$("#playhead");
-  if(!ph){ph=document.createElement("div");ph.id="playhead";ph.style.cssText="position:absolute;top:0;bottom:0;width:2px;background:var(--accent);z-index:5;pointer-events:none";tracksInner.appendChild(ph);}
-  ph.style.left=(currentTime*pxPerSec)+"px";
-}
-$("#zoom-slider").oninput=e=>{pxPerSec=+e.target.value;renderTracks();updateRuler();};
+    clearLog.addEventListener('click', () => { logConsole.innerHTML = ''; });
 
-function renderTracks(){
-  document.querySelectorAll(".clip").forEach(el=>el.remove());
-  tracksInner.querySelectorAll(".track").forEach(track=>{
-    clips.filter(c=>track.dataset.type===c.type).sort((a,b)=>a.start-b.start).forEach((c,idx)=>{
-      const layers=clips.filter(x=>x.type===c.type).length;
-      const el=document.createElement("div");
-      el.className=`clip ${c.type}`+(selectedClip===c.id?" selected":"");
-      el.style.left=(c.start*pxPerSec)+"px";
-      el.style.width=Math.max(c.duration*pxPerSec,26)+"px";
-      el.innerHTML=`${layers>1?`<span class="layer-badge">L${idx+1}</span>`:""}<span>${c.name}</span>${c.type==="audio"?'<div class="waveform"></div>':""}<div class="clip-handle left"></div><div class="clip-handle"></div>`;
-      el.onclick=e=>{e.stopPropagation();selectClip(c.id);};
-      attachDrag(el,c,"move");
-      attachDrag(el.querySelector(".clip-handle:last-child"),c,"trim-right");
-      attachDrag(el.querySelector(".clip-handle.left"),c,"trim-left");
-      track.appendChild(el);
+    // ============================================
+    // SLIDER UI
+    // ============================================
+    speedSlider.addEventListener('input', () => {
+      currentSpeed = parseFloat(speedSlider.value);
+      speedVal.textContent = currentSpeed.toFixed(1) + 'x';
     });
-  });
-  updateRuler();
-}
-function attachDrag(handle,c,mode){
-  handle.onmousedown=ev=>{
-    ev.stopPropagation();selectClip(c.id);
-    const sx=ev.clientX,s0=c.start,d0=c.duration;
-    const move=mv=>{
-      const d=(mv.clientX-sx)/pxPerSec;
-      if(mode==="move")c.start=Math.max(0,s0+d);
-      else if(mode==="trim-right")c.duration=Math.max(.3,d0+d);
-      else if(mode==="trim-left"){const ns=Math.max(0,s0+d);c.duration=d0-(ns-s0);c.start=ns;if(c.duration<.3)c.duration=.3;}
-      renderTracks();syncInspector();
-    };
-    const up=()=>{removeEventListener("mousemove",move);removeEventListener("mouseup",up);};
-    addEventListener("mousemove",move);addEventListener("mouseup",up);
-  };
-}
-scrollEl.onclick=()=>deselect();
+    lowpassSlider.addEventListener('input', () => {
+      const v = parseInt(lowpassSlider.value);
+      lowpassVal.textContent = v === 0 ? 'OFF' : v + ' Hz';
+    });
+    hshelfSlider.addEventListener('input', () => {
+      const v = parseFloat(hshelfSlider.value);
+      hshelfVal.textContent = (v > 0 ? '+' : '') + v.toFixed(1) + ' dB';
+    });
+    loudnormSlider.addEventListener('input', () => {
+      loudnormVal.textContent = parseFloat(loudnormSlider.value).toFixed(1) + ' LUFS';
+    });
 
-/* ================= SELECTION & INSPECTOR ================= */
-function selectClip(id){
-  selectedClip=id;renderTracks();
-  const c=clips.find(x=>x.id===id);if(!c)return;
-  $("#insp-empty").hidden=true;$("#insp-body").hidden=false;
-  $("#insp-title").textContent=`Properti — ${c.type}`;
-  const isText=c.type==="text", isAV=c.type!=="text";
-  $("#fld-font").hidden=!isText;
-  $("#fld-color").hidden=!isText;
-  $("#fld-filter").hidden=!isAV;
-  $("#fld-intensity").hidden=!isAV||c.filter==="none";
-  $("#fld-volume").hidden=c.type==="text";
-  $("#fld-speed").hidden=c.type==="image"||c.type==="text";
-  $("#prop-text").parentElement.hidden=!isText;
-  syncInspector();
-}
-function deselect(){selectedClip=null;renderTracks();$("#insp-body").hidden=true;$("#insp-empty").hidden=false;}
-function syncInspector(){
-  const c=clips.find(x=>x.id===selectedClip);if(!c)return;
-  $("#prop-text").value=c.text||"";$("#prop-size").value=c.size||64;
-  $("#prop-x").value=c.x;$("#prop-y").value=c.y;
-  $("#prop-scale").value=c.scale??100;$("#prop-rotate").value=c.rotate??0;
-  $("#prop-opacity").value=c.opacity??100;$("#prop-volume").value=c.volume??100;
-  $("#prop-speed").value=c.speed??100;
-  $("#op-val").textContent=c.opacity??100;$("#vol-val").textContent=c.volume??100;$("#spd-val").textContent=((c.speed??100)/100).toFixed(1);
-  $("#int-val").textContent=c.intensity??50;
-  $("#prop-duration").value=(+c.duration).toFixed(1);
-  $("#prop-transition").value=c.transition||"none";$("#prop-trandur").value=c.trandur??0.5;
-  document.querySelectorAll("#color-swatches .swatch").forEach(s=>s.classList.toggle("active",s.dataset.c===c.color));
-  document.querySelectorAll("#filter-grid .filter-chip").forEach(f=>f.classList.toggle("active",f.dataset.f===c.filter));
-}
+    limiterSoft.addEventListener('click', () => {
+      limiterMode = 'soft';
+      limiterSoft.className = 'btn-ghost text-xs py-1 px-3 border-indigo-400 text-indigo-300';
+      limiterHard.className = 'btn-ghost text-xs py-1 px-3 border-zinc-700 text-zinc-400';
+      limiterLabel.textContent = 'Soft';
+    });
+    limiterHard.addEventListener('click', () => {
+      limiterMode = 'hard';
+      limiterHard.className = 'btn-ghost text-xs py-1 px-3 border-indigo-400 text-indigo-300';
+      limiterSoft.className = 'btn-ghost text-xs py-1 px-3 border-zinc-700 text-zinc-400';
+      limiterLabel.textContent = 'Hard';
+    });
 
-/* ================= PROPERTY BINDINGS ================= */
-const BINDINGS={
-  text:"#prop-text",size:"#prop-size",x:"#prop-x",y:"#prop-y",scale:"#prop-scale",
-  rotate:"#prop-rotate",duration:"#prop-duration",transition:"#prop-transition",
-  trandur:"#prop-trandur"
-};
-Object.entries(BINDINGS).forEach(([k,sel])=>{
-  $(sel).oninput=e=>{
-    const c=clips.find(x=>x.id===selectedClip);if(!c)return;
-    c[k]=(k==="text"||k==="transition")?e.target.value:+e.target.value;
-    if(k==="duration")renderTracks();
-    drawFrame(currentTime);
-  };
-});
-const SLIDERS={
-  opacity:["#prop-opacity","#op-val",v=>v],
-  intensity:["#prop-intensity","#int-val",v=>v],
-  volume:["#prop-volume","#vol-val",v=>v],
-  speed:["#prop-speed","#spd-val",v=>(v/100).toFixed(1)+"x"]
-};
-Object.entries(SLIDERS).forEach(([k,[sel,lbl,fmtVal]])=>{
-  $(sel).oninput=e=>{
-    const c=clips.find(x=>x.id===selectedClip);if(!c)return;
-    c[k]=+e.target.value;$(lbl).textContent=fmtVal(+e.target.value);
-    drawFrame(currentTime);
-  };
-});
-const COLORS=["#ffffff","#00e5c7","#ff5470","#ffd166","#7b61ff","#4cc9f0","#f97316","#22c55e"];
-COLORS.forEach(col=>{
-  const s=document.createElement("div");s.className="swatch";s.dataset.c=col;s.style.background=col;
-  s.onclick=()=>{const c=clips.find(x=>x.id===selectedClip);if(c){c.color=col;syncInspector();drawFrame(currentTime);}};
-  $("#color-swatches").appendChild(s);
-});
-const FILTERS=["none","grayscale","sepia","invert","blur","brightness","contrast","warm","cold"];
-FILTERS.forEach(f=>{
-  const ch=document.createElement("div");ch.className="filter-chip";ch.dataset.f=f;ch.textContent=f;
-  ch.onclick=()=>{const c=clips.find(x=>x.id===selectedClip);if(c&&c.type!=="text"){c.filter=f;if(f!=="none")c.intensity=50;syncInspector();drawFrame(currentTime);}};
-  $("#filter-grid").appendChild(ch);
-});
+    // ============================================
+    // UPLOAD
+    // ============================================
+    uploadZone.addEventListener('click', () => audioInput.click());
+    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.style.borderColor = 'rgba(124,92,255,.6)'; });
+    uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = ''; });
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.style.borderColor = '';
+      const files = e.dataTransfer.files;
+      if (files.length) handleFile(files[0]);
+    });
 
-/* ================= CLIP ACTIONS ================= */
-function deleteSelected(){clips=clips.filter(c=>c.id!==selectedClip);deselect();drawFrame(currentTime);}
-function duplicateSelected(){
-  const c=clips.find(x=>x.id===selectedClip);if(!c)return;
-  const n={...c,id:Date.now()+Math.random()};n.start+=n.duration;
-  clips.push(n);selectClip(n.id);toast("Clip diduplikat ⧉");
-}
-function splitSelected(){
-  const c=clips.find(x=>x.id===selectedClip);if(!c)return;
-  if(currentTime<=c.start||currentTime>=c.start+c.duration){toast("Letakkan playhead di tengah clip dulu ✂️");return;}
-  const right={...c,id:Date.now()+Math.random()};
-  right.start=currentTime;right.duration=c.start+c.duration-currentTime;
-  c.duration=currentTime-c.start;
-  clips.push(right);selectClip(right.id);toast("Clip di-split ✂️");
-}
-function undo(){if(clips.length){clips.pop();deselect();drawFrame(currentTime);toast("Undo ↩");}}
-function saveProject(){
-  // strip blob URLs yang tidak bisa disimpan — simpan metadata saja
-  const data=JSON.parse(JSON.stringify({clips,media:media.map(m=>({...m,url:undefined}))}));
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="cutpro-project.json";a.click();
-  toast("Proyek disimpan 💾");
-}
+    audioInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFile(e.target.files[0]);
+      e.target.value = '';
+    });
 
-/* ================= PLAYBACK & RENDER ================= */
-const canvas=$("#preview"),ctx=canvas.getContext("2d");
-const imgCache={},vidEls={};
-function getImage(src){
-  if(!imgCache[src]){const im=new Image();im.src=src;imgCache[src]=im;}
-  return imgCache[src].complete?imgCache[src]:null;
-}
-function getVideo(c){
-  let v=vidEls[c.src];
-  if(!v){
-    v=document.createElement("video");v.src=c.src;v.preload="auto";
-    v.muted=true;vidEls[c.src]=v;
-  }
-  return v;
-}
-const CSS_FILTERS={
-  none:"",
-  grayscale:i=>`grayscale(${i})`,
-  sepia:i=>`sepia(${i})`,
-  invert:i=>`invert(${i})`,
-  blur:i=>`blur(${i*12}px)`,
-  brightness:i=>`brightness(${1+i})`,
-  contrast:i=>`contrast(${1+i})`,
-  warm:`sepia(.45) saturate(1.6) hue-rotate(-15deg)`,
-  cold:`hue-rotate(180deg) saturate(1.3) brightness(1.05)`
-};
-// transition easing: returns progress 0..1 during the transition window, or null when outside it
-function transProgress(c,t){
-  if(!c.transition||c.transition==="none")return null;
-  const p=(t-c.start)/Math.max(c.trandur,.1);
-  if(p<0||p>1)return null;
-  return p;
-}
-
-function togglePlay(){
-  playing=!playing;$("#play-btn").textContent=playing?"⏸":"▶";
-  if(playing){lastT=0;requestAnimationFrame(tick);}
-  else{
-    Object.values(vidEls).forEach(v=>v.pause());
-    if(activeAudio)activeAudio.pause();
-  }
-}
-function seekTo(t){currentTime=Math.max(0,t);updateScrubber();drawFrame(currentTime);}
-
-function tick(ts){
-  if(!playing)return;
-  if(lastT)currentTime+=(ts-lastT)/1000;
-  lastT=ts;
-  if(currentTime>=projectDuration()){currentTime=projectDuration();togglePlay();}
-  updateScrubber();drawFrame(currentTime);
-  requestAnimationFrame(tick);
-}
-function projectDuration(){return clips.length?Math.max(...clips.map(c=>c.start+c.duration)):0;}
-function fmt(s){return `${String(Math.floor(s/60)).padStart(2,"0")}:${String(Math.floor(s%60)).padStart(2,"0")}.${Math.floor((s%1)*10)}`;}
-function updateScrubber(){
-  const total=Math.max(projectDuration(),.1);
-  $("#scrubber").value=(currentTime/total)*1000;
-  $("#time-display").textContent=`${fmt(currentTime)} / ${fmt(total)}`;
-  const ph=$("#playhead");if(ph)ph.style.left=(currentTime*pxPerSec)+"px";
-}
-$("#scrubber").oninput=e=>seekTo((e.target.value/1000)*projectDuration());
-
-/* audio sync sederhana saat preview */
-let activeAudio=null;
-function syncAudio(t){
-  if(activeAudio&&!playing){activeAudio.pause();activeAudio=null;return;}
-  const ac=clips.find(c=>c.type==="audio"&&t>=c.start&&t<c.start+c.duration);
-  if(ac){
-    if(!activeAudio||activeAudio.dataset.src!==ac.src){
-      if(activeAudio)activeAudio.pause();
-      activeAudio=getVideo({src:ac.src});activeAudio.muted=false;
-      activeAudio.volume=(ac.volume/100)*masterVolume;
-      activeAudio.currentTime=Math.min((t-ac.start)*(ac.speed/100),activeAudio.duration||0);
-      activeAudio.play().catch(()=>{});
-      activeAudio.dataset.src=ac.src;
+    function handleFile(file) {
+      originalFile = file;
+      originalUrl = URL.createObjectURL(file);
+      audioOrig.src = originalUrl;
+      fileInfo.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`;
+      processBtn.disabled = false;
+      playOriginal.disabled = false;
+      log('info', `File uploaded: ${file.name}`);
+      updateStatus('Siap diproses', 'info');
     }
-    activeAudio.playbackRate=ac.speed/100;
-  }else if(activeAudio){activeAudio.pause();activeAudio=null;}
-}
 
-function drawFrame(t){
-  ctx.fillStyle="#000";ctx.fillRect(0,0,canvas.width,canvas.height);
-
-  // VIDEO / IMAGE layers (urut berdasar start = layering)
-  clips.filter(c=>(c.type==="video"||c.type==="image")&&t>=c.start&&t<c.start+c.duration)
-    .sort((a,b)=>a.start-b.start)
-    .forEach(c=>{
-      const i=(c.intensity??50)/100;
-      let f=typeof CSS_FILTERS[c.filter]==="function"?CSS_FILTERS[c.filter](i):(CSS_FILTERS[c.filter]||"");
-      const tp=transProgress(c,t);
-      ctx.save();
-      ctx.globalAlpha=(c.opacity??100)/100*(tp!==null?tp:1);
-      ctx.translate(canvas.width*c.x/100,canvas.height*c.y/100);
-      if(tp!==null&&c.transition==="slide")ctx.translate((1-tp)*canvas.width*.4,0);
-      else if(tp!==null&&c.transition==="zoom")ctx.scale(.7+.3*tp,.7+.3*tp);
-      ctx.rotate((c.rotate??0)*Math.PI/180);
-      const sc=(c.scale??100)/100;ctx.scale(sc,sc);
-      ctx.translate(-canvas.width/2,-canvas.height/2);
-      ctx.filter=f||"none";
-      if(c.type==="video"){
-        const v=getVideo(c);
-        v.playbackRate=(c.speed??100)/100;
-        if(playing)v.play().catch(()=>{});else v.pause();
-        v.currentTime=Math.min((t-c.start)*(c.speed??100)/100,v.duration||0);
-        if(v.readyState>=2)ctx.drawImage(v,0,0,canvas.width,canvas.height);
-      }else{
-        const im=getImage(c.src);
-        if(im){
-          const r=Math.max(canvas.width/im.width,canvas.height/im.height);
-          const w=im.width*r,h=im.height*r;
-          ctx.drawImage(im,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
-        }
+    // ============================================
+    // BOOT FFMPEG
+    // ============================================
+    async function bootFFmpeg() {
+      if (loaded) return;
+      try {
+        ffmpeg = new FFmpeg();
+        log('info', 'Memuat FFmpeg engine...');
+        updateStatus('Loading FFmpeg...', 'info');
+        await ffmpeg.load({
+          coreURL: await toBlobURL(`https://unpkg.com/@ffmpeg/core@${FFMPEG_CORE_VERSION}/dist/esm/ffmpeg-core.js`, 'text/javascript'),
+          wasmURL: await toBlobURL(`https://unpkg.com/@ffmpeg/core@${FFMPEG_CORE_VERSION}/dist/esm/ffmpeg-core.wasm`, 'application/wasm'),
+          classWorkerURL: await toBlobURL(`https://unpkg.com/@ffmpeg/ffmpeg@${FFMPEG_VERSION}/dist/umd/814.ffmpeg.js`, 'text/javascript'),
+        });
+        loaded = true;
+        ffmpeg.on('log', ({ message }) => { /* silent */ });
+        ffmpeg.on('progress', ({ progress }) => {
+          const p = Math.round(progress * 100);
+          progressText.textContent = `Proses ${p}%`;
+        });
+        log('success', 'FFmpeg siap!');
+        updateStatus('FFmpeg siap', 'success');
+        if (originalFile) processBtn.disabled = false;
+      } catch (e) {
+        log('error', `Gagal load FFmpeg: ${e.message}`);
+        updateStatus('Error load FFmpeg', 'error');
       }
-      ctx.restore();
+    }
+    bootFFmpeg();
+
+    // ============================================
+    // PROSES
+    // ============================================
+    processBtn.addEventListener('click', async () => {
+      if (!loaded || !originalFile) return;
+      processBtn.disabled = true;
+      progressText.textContent = 'Memulai...';
+      updateStatus('Memproses...', 'info');
+      log('process', '========== PROSES DIMULAI ==========');
+
+      try {
+        const speed = parseFloat(speedSlider.value);
+        const lowpassHz = parseInt(lowpassSlider.value);
+        const hshelf = parseFloat(hshelfSlider.value);
+        const lufs = parseFloat(loudnormSlider.value);
+        const limiter = limiterMode;
+
+        const srcName = 'input.' + (originalFile.name.split('.').pop() || 'mp3');
+        const outName = 'output.ogg';
+
+        log('info', `Speed: ${speed}x | Lowpass: ${lowpassHz === 0 ? 'OFF' : lowpassHz+'Hz'} | Shelf: ${hshelf}dB | LUFS: ${lufs} | Limiter: ${limiter}`);
+
+        // Baca file & tulis ke WASM
+        await ffmpeg.writeFile(srcName, await fetchFile(originalFile));
+
+        // --- Build Filter Chain (Nakal) ---
+        let filter = '';
+
+        // 1. Lowpass Pre-Filter (jika aktif)
+        if (lowpassHz > 0) {
+          filter += `lowpass=f=${lowpassHz},`;
+        }
+
+        // 2. Speed Up (asetrate) + Resample ke 48kHz
+        const srcRate = 44100; // default, tapi kita coba baca dari file? biar simpel, fallback.
+        // Kita ambil sample rate dari AudioContext kalau perlu, tapi untuk uji coba cukup 44100.
+        filter += `asetrate=${srcRate}*${speed},aresample=48000:filter_size=64:cutoff=0.98,`;
+
+        // 3. High-Shelf Boost (jika tidak 0)
+        if (hshelf !== 0) {
+          filter += `equalizer=f=5000:width_type=o:width=0.5:g=${hshelf},`;
+        }
+
+        // 4. Loudnorm (target lufs)
+        filter += `loudnorm=I=${lufs}:TP=-0.5:LRA=12,`;
+
+        // 5. Limiter (Hard atau Soft)
+        if (limiter === 'hard') {
+          filter += `alimiter=limit=0.97:attack=3:release=30:level_in=1:level_out=1`;
+        } else {
+          // Soft = lebih natural, pakai compand yang ringan
+          filter += `compand=attacks=0.001:decays=0.2:points=-70/-70|-30/-25|-12/-9|0/-3|20/-3`;
+        }
+
+        // Jalankan FFmpeg
+        await ffmpeg.exec(['-i', srcName, '-af', filter, '-c:a', 'libvorbis', '-q:a', '6', outName]);
+
+        // Baca hasil
+        const data = await ffmpeg.readFile(outName);
+        if (!data || data.byteLength === 0) throw new Error('File hasil 0 byte! Coba filter lain.');
+
+        processedBlob = new Blob([data.buffer], { type: 'audio/ogg' });
+        if (processedUrl) URL.revokeObjectURL(processedUrl);
+        processedUrl = URL.createObjectURL(processedBlob);
+        audioProc.src = processedUrl;
+
+        // Set playbackRate otomatis sesuai speed (simulasi Roblox)
+        const pbRate = 1 / speed;
+        audioProc.playbackRate = pbRate;
+
+        log('success', `✅ Proses selesai! Durasi asli: ${(originalFile.size / 1024 / 1024).toFixed(1)}MB -> Hasil: ${(processedBlob.size / 1024 / 1024).toFixed(1)}MB`);
+        log('info', `🔊 PlaybackRate diset ke ${pbRate.toFixed(3)} (1/${speed})`);
+        updateStatus('Siap diputar!', 'success');
+        playProcessed.disabled = false;
+        progressText.textContent = `Selesai (${(processedBlob.size / 1024 / 1024).toFixed(1)} MB)`;
+
+        // Bersihin file WASM biar gak numpuk
+        await ffmpeg.deleteFile(srcName).catch(() => {});
+        await ffmpeg.deleteFile(outName).catch(() => {});
+
+      } catch (e) {
+        log('error', `❌ Gagal: ${e.message}`);
+        updateStatus('Error', 'error');
+        progressText.textContent = 'Error';
+      }
+
+      processBtn.disabled = false;
     });
 
-  // TEXT layers
-  clips.filter(c=>c.type==="text"&&t>=c.start&&t<c.start+c.duration)
-    .forEach(c=>{
-      const tp=transProgress(c,t);
-      ctx.save();
-      ctx.globalAlpha=(c.opacity??100)/100*(tp!==null?tp:1);
-      ctx.font=`800 ${c.size}px 'Segoe UI',sans-serif`;
-      ctx.textAlign="center";ctx.textBaseline="middle";
-      ctx.shadowColor="rgba(0,0,0,.7)";ctx.shadowBlur=12;
-      ctx.fillStyle=c.color;
-      ctx.fillText(c.text,canvas.width*c.x/100,canvas.height*c.y/100);
-      ctx.restore();
+    // ============================================
+    // PLAYBACK
+    // ============================================
+    function stopAllAudio() {
+      audioOrig.pause();
+      audioProc.pause();
+      audioOrig.currentTime = 0;
+      audioProc.currentTime = 0;
+      playbackStatus.textContent = '⏹ Dihentikan';
+    }
+
+    playOriginal.addEventListener('click', () => {
+      stopAllAudio();
+      if (!originalUrl) return;
+      audioOrig.src = originalUrl; // refresh
+      audioOrig.play();
+      playbackStatus.textContent = '▶️ Memutar Original...';
     });
 
-  if(clips.length===0){
-    ctx.fillStyle="#555c74";ctx.font="24px sans-serif";ctx.textAlign="center";
-    ctx.fillText("Preview kosong — tambahkan clip!",canvas.width/2,canvas.height/2);
-  }
-  syncAudio(t);
-}
-$("#master-vol").oninput=e=>masterVolume=e.target.value/100;
+    playProcessed.addEventListener('click', () => {
+      stopAllAudio();
+      if (!processedUrl) return;
+      audioProc.src = processedUrl;
+      audioProc.play();
+      const pb = (1 / parseFloat(speedSlider.value)).toFixed(3);
+      playbackStatus.textContent = `🎧 Memutar Normalized (PlaybackSpeed = ${pb})...`;
+    });
 
-/* ================= EXPORT (.webm via MediaRecorder) ================= */
-async function startExport(){
-  if(!clips.length){toast("Tambahkan clip dulu sebelum render!");return;}
-  const total=projectDuration();
-  const stream=canvas.captureStream(FPS_EXPORT);
-  // ambil audio dari track
-  try{
-    const acx=new AudioContext(),dest=acx.createMediaStreamDestination();
-    stream.addTrack(dest.stream.getAudioTracks()[0]);
-  }catch(e){}
-  const mime=["video/webm;codecs=vp9","video/webm"].find(m=>MediaRecorder.isTypeSupported(m))||"video/webm";
-  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8_000_000});
-  const chunks=[];
-  rec.ondataavailable=e=>chunks.push(e.data);
-  rec.onstop=()=>{
-    const blob=new Blob(chunks,{type:"video/webm"});
-    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="cutpro-export.webm";a.click();
-    modal.remove();toast("Export selesai! 🎉");
-  };
-  // modal progress
-  const modal=document.createElement("div");modal.className="modal-bg";
-  modal.innerHTML=`<div class="modal"><div class="spinner"></div><h3 style="margin-bottom:8px">Rendering...</h3><p style="font-size:12px;color:var(--muted)" id="prog-txt">0%</p></div>`;
-  document.body.appendChild(modal);
-  // play realtime & record
-  currentTime=0;rec.start();
-  const t0=performance.now();
-  await new Promise(res=>{
-    const step=now=>{
-      currentTime=(now-t0)/1000;
-      if(currentTime>=total){res();return;}
-      updateScrubber();drawFrame(currentTime);
-      $("#prog-txt").textContent=Math.round(currentTime/total*100)+"%";
-      requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  });
-  rec.stop();
-}
-const FPS_EXPORT=30;
+    stopPlayback.addEventListener('click', stopAllAudio);
 
-/* ================= KEYBOARD SHORTCUTS ================= */
-addEventListener("keydown",e=>{
-  if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT")return;
-  if(e.code==="Space"){e.preventDefault();togglePlay();}
-  else if(e.key==="Delete"||e.key==="Backspace"){deleteSelected();}
-  else if(e.ctrlKey&&e.key.toLowerCase()==="d"){e.preventDefault();duplicateSelected();}
-  else if(e.ctrlKey&&e.key.toLowerCase()==="s"){e.preventDefault();saveProject();}
-  else if(e.key==="ArrowLeft"){seekTo(currentTime-(e.shiftKey?1:1/30));}
-  else if(e.key==="ArrowRight"){seekTo(currentTime+(e.shiftKey?1:1/30));}
-});
+    // Reset
+    resetBtn.addEventListener('click', () => {
+      stopAllAudio();
+      if (processedUrl) URL.revokeObjectURL(processedUrl);
+      if (originalUrl) URL.revokeObjectURL(originalUrl);
+      processedUrl = null;
+      originalUrl = null;
+      processedBlob = null;
+      originalFile = null;
+      fileInfo.textContent = 'Belum ada file';
+      processBtn.disabled = true;
+      playOriginal.disabled = true;
+      playProcessed.disabled = true;
+      progressText.textContent = 'Belum diproses';
+      logConsole.innerHTML = '';
+      log('info', '🔄 Lab di-reset');
+      updateStatus('Siap', 'info');
+      audioInput.value = '';
+    });
 
-/* ================= INIT ================= */
-renderLibrary("media");
-updateRuler();
-drawFrame(0);
-</script>
+    // ============================================
+    // TOMBOL KEYBOARD SHORTCUT (opsional)
+    // ============================================
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !processBtn.disabled) processBtn.click();
+      if (e.key === ' ' || e.key === 'Space') { e.preventDefault(); stopAllAudio(); }
+    });
+
+    log('info', '🚀 Lab Normalisasi Nakal siap! Upload lagu & mulai eksperimen.');
+  </script>
 </body>
 </html>
