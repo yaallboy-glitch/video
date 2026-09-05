@@ -316,24 +316,24 @@
       updateStatus('Memproses...', 'info');
       log('process', '========== PROSES DIMULAI ==========');
 
-      try {
-        const speed = parseFloat(speedSlider.value);
-        const lowpassHz = parseInt(lowpassSlider.value);
-        const hshelf = parseFloat(hshelfSlider.value);
-        const lufs = parseFloat(loudnormSlider.value);
-        const limiter = limiterMode;
+        try {
+  const speed = parseFloat(speedSlider.value);
+  const lowpassHz = parseInt(lowpassSlider.value);
+  const hshelf = parseFloat(hshelfSlider.value);
+  const lufs = parseFloat(loudnormSlider.value);
+  const limiter = limiterMode;
 
-        const srcName = 'input.' + (originalFile.name.split('.').pop() || 'mp3');
-        const outName = 'output.ogg';
+  const srcName = 'input.' + (originalFile.name.split('.').pop() || 'mp3');
+  const outName = 'output.ogg';
 
-        log('info', `Speed: ${speed}x | Lowpass: ${lowpassHz === 0 ? 'OFF' : lowpassHz+'Hz'} | Shelf: ${hshelf}dB | LUFS: ${lufs} | Limiter: ${limiter}`);
+  log('info', `Speed: ${speed}x | Lowpass: ${lowpassHz === 0 ? 'OFF' : lowpassHz+'Hz'} | Shelf: ${hshelf}dB | LUFS: ${lufs} | Limiter: ${limiter}`);
 
-        // BACA FILE JADI ARRAY BUFFER (COCOK UNTUK iOS)
-const fileData = new Uint8Array(await originalFile.arrayBuffer());
-await ffmpeg.writeFile(srcName, fileData);
+  // --- PERBAIKAN UNTUK iOS ---
+  const fileData = new Uint8Array(await originalFile.arrayBuffer());
+  await ffmpeg.writeFile(srcName, fileData);
+  // ---------------------------
 
-        // --- Build Filter Chain (Nakal) ---
-        let filter = '';
+  let filter = '';
 
         // 1. Lowpass Pre-Filter (jika aktif)
         if (lowpassHz > 0) {
