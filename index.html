@@ -44,7 +44,7 @@
 
     <!-- UPLOAD ZONE -->
     <div class="upload-zone mb-4" id="uploadZone">
-      <input type="file" id="audioInput" accept=".mp3,.wav,.ogg,.flac,.m4a" class="hidden">
+      <input type="file" id="audioInput" accept="audio/*" class="hidden">
       <div id="uploadText">
         <i class="fa-solid fa-cloud-arrow-up text-2xl text-zinc-600"></i>
         <p class="text-sm font-medium mt-1">Tarik & lepas, atau klik untuk upload</p>
@@ -328,8 +328,9 @@
 
         log('info', `Speed: ${speed}x | Lowpass: ${lowpassHz === 0 ? 'OFF' : lowpassHz+'Hz'} | Shelf: ${hshelf}dB | LUFS: ${lufs} | Limiter: ${limiter}`);
 
-        // Baca file & tulis ke WASM
-        await ffmpeg.writeFile(srcName, await fetchFile(originalFile));
+        // BACA FILE JADI ARRAY BUFFER (COCOK UNTUK iOS)
+const fileData = new Uint8Array(await originalFile.arrayBuffer());
+await ffmpeg.writeFile(srcName, fileData);
 
         // --- Build Filter Chain (Nakal) ---
         let filter = '';
