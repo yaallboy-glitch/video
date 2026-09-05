@@ -3,534 +3,696 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎚️ Editor Audio - Potong & Sambung</title>
+  <title>🎧 Studio Audio Pro</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
   <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
-    * { box-sizing: border-box; }
-    body { background: #0b1024; color: #e4e4e7; font-family: system-ui, sans-serif; }
-    .glass { background: rgba(19,24,56,.6); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.08); }
-    .upload-zone { border: 1.5px dashed rgba(255,255,255,.2); transition: all .3s; cursor: pointer; background: rgba(255,255,255,.02); padding: 20px; border-radius: 12px; text-align: center; }
+    * { box-sizing: border-box; margin: 0; }
+    body { background: #060914; color: #e4e4e7; font-family: system-ui, sans-serif; display: flex; height: 100vh; overflow: hidden; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 2px; }
+
+    .sidebar { width: 220px; background: rgba(11,16,36,.95); backdrop-filter: blur(12px); border-right: 1px solid rgba(255,255,255,.06); padding: 16px 10px; display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; overflow-y: auto; }
+    .sidebar .logo { font-size: 18px; font-weight: 800; padding: 8px 12px; margin-bottom: 12px; letter-spacing: -0.5px; }
+    .sidebar .logo span { background: linear-gradient(135deg, #7c5cff, #21d4fd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 500; color: #a1a1aa; cursor: pointer; transition: all .2s; border: 1px solid transparent; }
+    .nav-item i { width: 18px; text-align: center; font-size: 14px; }
+    .nav-item:hover { background: rgba(255,255,255,.04); color: #e4e4e7; }
+    .nav-item.active { background: linear-gradient(135deg, rgba(124,92,255,.2), rgba(33,212,253,.1)); color: #c9b8ff; border-color: rgba(124,92,255,.2); }
+    .nav-item.premium { opacity: 0.7; }
+    .nav-item.premium .badge { font-size: 8px; background: linear-gradient(135deg, #fbbf24, #f59e0b); color: #000; padding: 1px 6px; border-radius: 10px; margin-left: auto; font-weight: 700; }
+
+    .main-area { flex: 1; display: flex; flex-direction: column; min-width: 0; padding: 20px; overflow-y: auto; background: radial-gradient(ellipse 600px 400px at 15% 20%, rgba(124,92,255,.08), transparent 70%); }
+    .panel { background: rgba(19,24,56,.6); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.07); border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+    .glass { background: rgba(19,24,56,.6); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.07); border-radius: 16px; }
+    .upload-zone { border: 1.5px dashed rgba(255,255,255,.2); transition: all .3s; cursor: pointer; background: rgba(255,255,255,.02); padding: 24px; border-radius: 12px; text-align: center; }
     .upload-zone:hover { border-color: rgba(124,92,255,.5); background: rgba(124,92,255,.05); }
-    .btn-primary { background: linear-gradient(135deg, #7c5cff, #21d4fd); color: #fff; font-weight: 600; padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer; transition: all .2s; }
+    .btn-primary { background: linear-gradient(135deg, #7c5cff, #21d4fd); color: #fff; font-weight: 600; padding: 8px 18px; border-radius: 8px; border: none; cursor: pointer; transition: all .2s; font-size: 13px; }
     .btn-primary:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(124,92,255,.4); }
-    .btn-primary:disabled { opacity: .4; cursor: not-allowed; transform: none; }
-    .btn-ghost { background: transparent; color: #a1a1aa; padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,.08); cursor: pointer; transition: all .2s; }
+    .btn-primary:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-ghost { background: transparent; color: #a1a1aa; padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,.08); cursor: pointer; transition: all .2s; font-size: 12px; }
     .btn-ghost:hover { color: #e4e4e7; border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.05); }
+
     .file-card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
     .waveform-container { position: relative; height: 60px; background: #000; border-radius: 6px; overflow: hidden; cursor: pointer; }
     canvas.waveform { width: 100%; height: 100%; display: block; }
     .region-overlay { position: absolute; top: 0; height: 100%; background: rgba(124,92,255,.3); pointer-events: none; }
-    .slider-group { display: flex; gap: 12px; align-items: center; margin-top: 6px; }
-    .slider-group input[type="range"] { flex: 1; -webkit-appearance: none; height: 4px; background: #27272a; border-radius: 2px; outline: none; }
+    .slider-group { display: flex; gap: 10px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
+    .slider-group input[type="range"] { flex: 1; min-width: 60px; -webkit-appearance: none; height: 4px; background: #27272a; border-radius: 2px; outline: none; }
     .slider-group input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #7c5cff; border-radius: 50%; cursor: pointer; }
-    .log-console { background: #000; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 11px; max-height: 120px; overflow-y: auto; border: 1px solid rgba(255,255,255,.04); }
+    .log-console { background: #000; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 11px; max-height: 100px; overflow-y: auto; border: 1px solid rgba(255,255,255,.04); }
     .log-line { display: flex; gap: 8px; }
     .log-tag { font-weight: 700; width: 60px; flex-shrink: 0; }
     .log-tag.info { color: #60a5fa; }
     .log-tag.success { color: #4ade80; }
     .log-tag.error { color: #f87171; }
     .log-tag.process { color: #fbbf24; }
+    .badge-pro { font-size: 9px; background: rgba(251,191,36,.15); color: #fbbf24; padding: 2px 8px; border-radius: 20px; border: 1px solid rgba(251,191,36,.2); }
+    .hidden { display: none !important; }
+    .upgrade-banner { background: linear-gradient(135deg, rgba(251,191,36,.1), rgba(245,158,11,.05)); border: 1px solid rgba(251,191,36,.2); border-radius: 10px; padding: 14px; text-align: center; margin-top: auto; }
   </style>
 </head>
-<body class="min-h-screen p-4 flex items-start justify-center">
+<body>
 
-<div class="w-full max-w-5xl">
-
-  <!-- HEADER -->
-  <div class="flex items-center justify-between mb-4">
-    <div>
-      <h1 class="text-2xl font-bold tracking-tight">🎚️ Editor Audio <span class="text-indigo-400">Potong & Sambung</span></h1>
-      <p class="text-xs text-zinc-500">Upload file → potong bagian → gabung semua jadi satu</p>
-    </div>
-    <div id="statusBadge" class="text-xs bg-zinc-800 px-3 py-1 rounded-full text-zinc-400">⏳ Siap</div>
-  </div>
-
-  <!-- UPLOAD ZONE -->
-  <div class="upload-zone mb-4" id="uploadZone">
-    <input type="file" id="audioInput" accept="audio/*" multiple class="hidden">
-    <div>
-      <i class="fa-solid fa-cloud-arrow-up text-2xl text-zinc-600"></i>
-      <p class="text-sm font-medium mt-1">Tarik & lepas, atau klik untuk upload (bisa banyak file)</p>
-      <p class="text-[10px] text-zinc-600" id="fileInfo">Belum ada file</p>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">🎧 <span>Studio</span>Pro</div>
+    <div class="nav-item active" data-tab="dashboard"><i class="fa-solid fa-table-cells"></i> Dashboard</div>
+    <div class="nav-item" data-tab="crop"><i class="fa-solid fa-scissors"></i> Potong</div>
+    <div class="nav-item" data-tab="concat"><i class="fa-solid fa-link"></i> Sambung</div>
+    <div class="nav-item premium" data-tab="denoise"><i class="fa-solid fa-ear-deaf"></i> Denoise AI <span class="badge">PRO</span></div>
+    <div class="nav-item premium" data-tab="normalize"><i class="fa-solid fa-volume-high"></i> Normalisasi <span class="badge">PRO</span></div>
+    <div class="nav-item premium" data-tab="effects"><i class="fa-solid fa-sliders"></i> Efek Audio <span class="badge">PRO</span></div>
+    <div class="nav-item premium" data-tab="roblox"><i class="fa-solid fa-cube"></i> Roblox Preset <span class="badge">PRO</span></div>
+    <div style="flex:1"></div>
+    <div class="upgrade-banner">
+      <p class="text-xs font-semibold text-amber-300">🔒 Fitur Pro Terkunci</p>
+      <p class="text-[10px] text-zinc-500 mt-1">Upgrade untuk Denoise, Normalisasi, Efek & Roblox</p>
+      <button class="btn-primary w-full mt-2 text-xs py-1.5">💎 Upgrade Sekarang</button>
     </div>
   </div>
 
-  <!-- DAFTAR FILE + WAVEFORM -->
-  <div id="fileList" class="space-y-2"></div>
+  <!-- MAIN CONTENT -->
+  <div class="main-area" id="mainArea">
 
-  <!-- AKSI GLOBAL -->
-  <div class="flex flex-wrap items-center gap-3 mt-4 p-4 glass rounded-xl">
-    <button class="btn-primary" id="concatBtn"><i class="fa-solid fa-link"></i> Gabung Semua</button>
-    <button class="btn-primary" id="cropBtn" disabled><i class="fa-solid fa-scissors"></i> Potong File Terpilih</button>
-    <button class="btn-ghost" id="resetBtn"><i class="fa-solid fa-rotate"></i> Reset</button>
-    <span class="text-xs text-zinc-500 ml-auto" id="progressText">Belum ada proses</span>
-  </div>
-
-  <!-- LOG -->
-  <div class="mt-4 glass rounded-xl p-3">
-    <div class="flex justify-between items-center mb-1.5">
-      <span class="text-xs font-semibold text-zinc-500"><i class="fa-solid fa-terminal"></i> Log</span>
-      <button class="text-[10px] text-zinc-600 hover:text-zinc-300" id="clearLog">Clear</button>
-    </div>
-    <div id="logConsole" class="log-console"></div>
-  </div>
-
-</div>
-
-<script>
-  // ============================================
-  // SETUP
-  // ============================================
-  const { FFmpeg } = FFmpegWASM;
-  const { toBlobURL, fetchFile } = FFmpegUtil;
-
-  const $ = id => document.getElementById(id);
-  const audioInput = $('audioInput');
-  const uploadZone = $('uploadZone');
-  const fileList = $('fileList');
-  const fileInfo = $('fileInfo');
-  const concatBtn = $('concatBtn');
-  const cropBtn = $('cropBtn');
-  const resetBtn = $('resetBtn');
-  const progressText = $('progressText');
-  const statusBadge = $('statusBadge');
-  const logConsole = $('logConsole');
-  const clearLog = $('clearLog');
-
-  let ffmpeg = null;
-  let loaded = false;
-  let files = []; // array { id, file, name, size, audioBuffer, waveformData, start, end }
-
-  let fileCounter = 0;
-  let selectedFileId = null; // id file yang sedang dipilih untuk dipotong
-
-  // ============================================
-  // LOGGING
-  // ============================================
-  function log(tag, msg) {
-    const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
-    const row = document.createElement('div');
-    row.className = 'log-line';
-    const cls = tag.toLowerCase();
-    row.innerHTML = `<span class="log-tag ${cls}">[${tag.toUpperCase()}]</span><span class="text-zinc-500">${time}</span><span class="text-zinc-300">${msg}</span>`;
-    logConsole.appendChild(row);
-    logConsole.scrollTop = logConsole.scrollHeight;
-  }
-
-  function updateStatus(msg, type = 'info') {
-    statusBadge.textContent = msg;
-    statusBadge.className = `text-xs px-3 py-1 rounded-full ${
-      type === 'error' ? 'bg-red-900/50 text-red-300' :
-      type === 'success' ? 'bg-emerald-900/50 text-emerald-300' :
-      'bg-zinc-800 text-zinc-400'
-    }`;
-  }
-
-  clearLog.addEventListener('click', () => { logConsole.innerHTML = ''; });
-
-  // ============================================
-  // BOOT FFMPEG
-  // ============================================
-  async function bootFFmpeg() {
-    if (loaded) return;
-    try {
-      ffmpeg = new FFmpeg();
-      log('info', 'Memuat FFmpeg engine...');
-      updateStatus('Loading FFmpeg...', 'info');
-      await ffmpeg.load({
-        coreURL: await toBlobURL('https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js', 'text/javascript'),
-        wasmURL: await toBlobURL('https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm', 'application/wasm'),
-        classWorkerURL: await toBlobURL('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/814.ffmpeg.js', 'text/javascript'),
-      });
-      loaded = true;
-      ffmpeg.on('log', ({ message }) => { /* silent */ });
-      ffmpeg.on('progress', ({ progress }) => {
-        const p = Math.round(progress * 100);
-        progressText.textContent = `Proses ${p}%`;
-      });
-      log('success', 'FFmpeg siap!');
-      updateStatus('FFmpeg siap', 'success');
-    } catch (e) {
-      log('error', `Gagal load FFmpeg: ${e.message}`);
-      updateStatus('Error load FFmpeg', 'error');
-    }
-  }
-  bootFFmpeg();
-
-  // ============================================
-  // UPLOAD & DECODE AUDIO
-  // ============================================
-  uploadZone.addEventListener('click', () => audioInput.click());
-  uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.style.borderColor = 'rgba(124,92,255,.6)'; });
-  uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = ''; });
-  uploadZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    uploadZone.style.borderColor = '';
-    if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
-  });
-
-  audioInput.addEventListener('change', (e) => {
-    if (e.target.files.length) handleFiles(e.target.files);
-    e.target.value = '';
-  });
-
-  function handleFiles(fileListObj) {
-    const arr = Array.from(fileListObj);
-    arr.forEach(file => {
-      if (file.type.startsWith('audio/')) {
-        processFile(file);
-      } else {
-        log('error', `File ${file.name} bukan audio.`);
-      }
-    });
-    updateFileInfo();
-    updateCropButton();
-  }
-
-  async function processFile(file) {
-    try {
-      const arrayBuffer = await file.arrayBuffer();
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-      const waveformData = getWaveformData(audioBuffer, 800); // 800 titik
-
-      const id = ++fileCounter;
-      files.push({
-        id,
-        file,
-        name: file.name,
-        size: file.size,
-        audioBuffer,
-        waveformData,
-        start: 0,
-        end: audioBuffer.duration,
-        selected: false,
-      });
-      log('info', `✅ ${file.name} (${audioBuffer.duration.toFixed(1)} detik)`);
-      renderFileList();
-    } catch (e) {
-      log('error', `Gagal decode ${file.name}: ${e.message}`);
-    }
-  }
-
-  function getWaveformData(audioBuffer, points) {
-    const data = audioBuffer.getChannelData(0);
-    const step = Math.floor(data.length / points);
-    const result = [];
-    for (let i = 0; i < points; i++) {
-      const start = i * step;
-      let sum = 0;
-      for (let j = 0; j < step; j++) {
-        sum += Math.abs(data[start + j] || 0);
-      }
-      result.push(sum / step);
-    }
-    return result;
-  }
-
-  function updateFileInfo() {
-    fileInfo.textContent = files.length ? `${files.length} file terupload` : 'Belum ada file';
-  }
-
-  // ============================================
-  // RENDER FILE LIST + WAVEFORM
-  // ============================================
-  function renderFileList() {
-    if (!files.length) {
-      fileList.innerHTML = '<div class="text-center text-zinc-500 text-sm py-6">Belum ada file. Upload dulu!</div>';
-      return;
-    }
-
-    let html = '';
-    files.forEach((f, idx) => {
-      const isSelected = (f.id === selectedFileId);
-      html += `
-        <div class="file-card ${isSelected ? 'border-indigo-400/50' : ''}" data-id="${f.id}">
-          <div class="flex items-center justify-between gap-2 mb-1">
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-medium text-zinc-300 truncate">${f.name}</span>
-              <span class="text-[10px] text-zinc-500">${f.audioBuffer.duration.toFixed(1)}s</span>
-            </div>
-            <div class="flex gap-1">
-              <button class="btn-ghost text-[10px] py-0.5 px-2 select-btn" data-id="${f.id}">Pilih</button>
-              <button class="btn-ghost text-[10px] py-0.5 px-2 remove-btn" data-id="${f.id}"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-          </div>
-          <div class="waveform-container" data-id="${f.id}">
-            <canvas class="waveform" data-id="${f.id}"></canvas>
-            <div class="region-overlay" id="region-${f.id}" style="left:${(f.start/f.audioBuffer.duration)*100}%;width:${((f.end-f.start)/f.audioBuffer.duration)*100}%;"></div>
-          </div>
-          <div class="slider-group">
-            <span class="text-[9px] text-zinc-500 w-10">Start</span>
-            <input type="range" min="0" max="100" value="${(f.start/f.audioBuffer.duration)*100}" class="start-slider" data-id="${f.id}">
-            <span class="text-[9px] text-zinc-500 w-10">End</span>
-            <input type="range" min="0" max="100" value="${(f.end/f.audioBuffer.duration)*100}" class="end-slider" data-id="${f.id}">
-            <span class="text-[9px] text-zinc-500 w-12" id="time-${f.id}">${f.start.toFixed(1)}s - ${f.end.toFixed(1)}s</span>
-          </div>
+    <!-- =============== TAB: DASHBOARD =============== -->
+    <div class="tab-content" id="tab-dashboard">
+      <div class="upload-zone mb-4" id="uploadZone">
+        <input type="file" id="audioInput" accept="audio/*" multiple class="hidden">
+        <div>
+          <i class="fa-solid fa-cloud-arrow-up text-3xl text-zinc-600"></i>
+          <p class="text-sm font-medium mt-2">Tarik & lepas, atau klik untuk upload (bisa banyak)</p>
+          <p class="text-xs text-zinc-600 mt-1" id="fileInfo">Belum ada file</p>
         </div>
-      `;
-    });
-    fileList.innerHTML = html;
+      </div>
+      <div id="fileList" class="space-y-2"></div>
+    </div>
 
-    // Gambar waveform untuk setiap file
-    files.forEach(f => {
-      const canvas = document.querySelector(`canvas.waveform[data-id="${f.id}"]`);
-      if (canvas) drawWaveform(canvas, f.waveformData);
-    });
+    <!-- =============== TAB: POTONG =============== -->
+    <div class="tab-content hidden" id="tab-crop">
+      <div class="panel">
+        <h3 class="text-sm font-bold mb-2"><i class="fa-solid fa-scissors text-indigo-400"></i> Potong File</h3>
+        <p class="text-xs text-zinc-500 mb-3">Pilih file dari daftar, atur region Start/End, lalu klik Potong.</p>
+        <div class="flex gap-2">
+          <button class="btn-primary" id="cropBtn"><i class="fa-solid fa-cut"></i> Potong Terpilih</button>
+          <span class="text-xs text-zinc-500 self-center" id="cropStatus">Pilih file dulu</span>
+        </div>
+      </div>
+      <div id="cropFileList" class="space-y-2"></div>
+    </div>
 
-    // Event listener untuk tombol pilih
-    document.querySelectorAll('.select-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const id = parseInt(btn.dataset.id);
-        selectedFileId = id;
-        renderFileList();
-        updateCropButton();
-      });
-    });
+    <!-- =============== TAB: SAMBUNG =============== -->
+    <div class="tab-content hidden" id="tab-concat">
+      <div class="panel">
+        <h3 class="text-sm font-bold mb-2"><i class="fa-solid fa-link text-indigo-400"></i> Sambung Semua File</h3>
+        <p class="text-xs text-zinc-500 mb-3">Gabungkan semua file yang terupload menjadi satu file (urut sesuai daftar).</p>
+        <button class="btn-primary" id="concatBtn"><i class="fa-solid fa-arrow-right-arrow-left"></i> Gabung Semua</button>
+        <span class="text-xs text-zinc-500 ml-3" id="concatStatus">Siap</span>
+      </div>
+    </div>
 
-    // Event listener untuk hapus
-    document.querySelectorAll('.remove-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const id = parseInt(btn.dataset.id);
-        removeFile(id);
-      });
-    });
+    <!-- =============== TAB: DENOISE =============== -->
+    <div class="tab-content hidden" id="tab-denoise">
+      <div class="panel">
+        <h3 class="text-sm font-bold mb-2"><i class="fa-solid fa-ear-deaf text-indigo-400"></i> Denoise AI (hilangkan noise)</h3>
+        <p class="text-xs text-zinc-500 mb-3">Kurangi noise latar (desisan, dengungan) dari file terpilih.</p>
+        <div class="flex items-center gap-4 mb-3">
+          <span class="text-xs text-zinc-400">Kekuatan:</span>
+          <input type="range" id="denoiseStrength" min="5" max="40" value="20" class="w-40">
+          <span class="text-xs text-indigo-300" id="denoiseVal">20 dB</span>
+        </div>
+        <button class="btn-primary" id="denoiseBtn"><i class="fa-solid fa-wand-magic-sparkles"></i> Terapkan Denoise</button>
+        <span class="text-xs text-zinc-500 ml-3" id="denoiseStatus">Pilih file dulu</span>
+        <div class="mt-2 text-[10px] text-amber-300/70"><i class="fa-solid fa-lock"></i> Fitur Pro</div>
+      </div>
+    </div>
 
-    // Event listener slider
-    document.querySelectorAll('.start-slider').forEach(slider => {
-      slider.addEventListener('input', (e) => {
-        const id = parseInt(slider.dataset.id);
-        const file = files.find(f => f.id === id);
-        if (!file) return;
-        const pct = parseFloat(slider.value) / 100;
-        file.start = Math.min(pct * file.audioBuffer.duration, file.end - 0.5);
-        // Update end slider min
-        const endSlider = document.querySelector(`.end-slider[data-id="${id}"]`);
-        if (endSlider) endSlider.min = slider.value;
-        updateRegionAndTime(id);
-      });
-    });
+    <!-- =============== TAB: NORMALISASI =============== -->
+    <div class="tab-content hidden" id="tab-normalize">
+      <div class="panel">
+        <h3 class="text-sm font-bold mb-2"><i class="fa-solid fa-volume-high text-indigo-400"></i> Normalisasi Volume</h3>
+        <p class="text-xs text-zinc-500 mb-3">Ratakan & keraskan volume ke target loudness standar.</p>
+        <div class="flex items-center gap-4 mb-3">
+          <span class="text-xs text-zinc-400">Target LUFS:</span>
+          <input type="range" id="normTarget" min="-18" max="-8" step="0.5" value="-14" class="w-40">
+          <span class="text-xs text-indigo-300" id="normVal">-14 LUFS</span>
+        </div>
+        <button class="btn-primary" id="normalizeBtn"><i class="fa-solid fa-arrow-up-wide-short"></i> Normalisasi</button>
+        <span class="text-xs text-zinc-500 ml-3" id="normStatus">Pilih file dulu</span>
+        <div class="mt-2 text-[10px] text-amber-300/70"><i class="fa-solid fa-lock"></i> Fitur Pro</div>
+      </div>
+    </div>
 
-    document.querySelectorAll('.end-slider').forEach(slider => {
-      slider.addEventListener('input', (e) => {
-        const id = parseInt(slider.dataset.id);
-        const file = files.find(f => f.id === id);
-        if (!file) return;
-        const pct = parseFloat(slider.value) / 100;
-        file.end = Math.max(pct * file.audioBuffer.duration, file.start + 0.5);
-        const startSlider = document.querySelector(`.start-slider[data-id="${id}"]`);
-        if (startSlider) startSlider.max = slider.value;
-        updateRegionAndTime(id);
-      });
-    });
+    <!-- =============== TAB: EFEK =============== -->
+    <div class="tab-content hidden" id="tab-effects">
+      <div class="panel">
+        <h3 class="text-sm font-bold mb-2"><i class="fa-solid fa-sliders text-indigo-400"></i> Efek Audio</h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div><label class="text-[10px] text-zinc-500">Bass (dB)</label><input type="range" id="eqBass" min="-10" max="10" value="0" class="w-full"><span class="text-[10px] text-indigo-300" id="eqBassVal">0</span></div>
+          <div><label class="text-[10px] text-zinc-500">Mid (dB)</label><input type="range" id="eqMid" min="-10" max="10" value="0" class="w-full"><span class="text-[10px] text-indigo-300" id="eqMidVal">0</span></div>
+          <div><label class="text-[10px] text-zinc-500">Treble (dB)</label><input type="range" id="eqTreble" min="-10" max="10" value="0" class="w-full"><span class="text-[10px] text-indigo-300" id="eqTrebleVal">0</span></div>
+          <div class="col-span-2"><label class="text-[10px] text-zinc-500">Echo/Reverb (%)</label><input type="range" id="echoAmount" min="0" max="100" value="0" class="w-full"><span class="text-[10px] text-indigo-300" id="echoVal">0%</span></div>
+        </div>
+        <button class="btn-primary mt-3" id="effectsBtn"><i class="fa-solid fa-wand-magic-sparkles"></i> Terapkan Efek</button>
+        <span class="text-xs text-zinc-500 ml-3" id="effectsStatus">Pilih file dulu</span>
+        <div class="mt-2 text-[10px] text-amber-300/70"><i class="fa-solid fa-lock"></i> Fitur Pro</div>
+      </div>
+    </div>
 
-    // Klik pada waveform untuk pilih file
-    document.querySelectorAll('.waveform-container').forEach(container => {
-      container.addEventListener('click', (e) => {
-        const id = parseInt(container.dataset.id);
-        selectedFileId = id;
-        renderFileList();
-        updateCropButton();
-      });
-    });
-  }
+    <!-- =============== TAB: ROBLOX =============== -->
+    <div class="tab-content hidden" id="tab-roblox">
+      <div class="panel">
+        <h3 class="text-sm font-bold mb-2"><i class="fa-solid fa-cube text-indigo-400"></i> Roblox Preset (Anti-Pecah)</h3>
+        <p class="text-xs text-zinc-500 mb-3">1-klik: Speed Up + Lowpass + Resample 48kHz + Normalisasi. Hasil siap upload Roblox, bebas DA!</p>
+        <div class="flex items-center gap-4 mb-3">
+          <span class="text-xs text-zinc-400">Speed (x):</span>
+          <input type="range" id="rbxSpeed" min="2.0" max="8.0" step="0.1" value="3.0" class="w-40">
+          <span class="text-xs text-indigo-300" id="rbxSpeedVal">3.0x</span>
+        </div>
+        <button class="btn-primary" id="rbxBtn"><i class="fa-solid fa-rocket"></i> Proses Roblox Preset</button>
+        <span class="text-xs text-zinc-500 ml-3" id="rbxStatus">Pilih file dulu</span>
+        <div class="mt-2 text-[10px] text-amber-300/70"><i class="fa-solid fa-lock"></i> Fitur Pro</div>
+      </div>
+    </div>
 
-  function drawWaveform(canvas, data) {
-    const ctx = canvas.getContext('2d');
-    const rect = canvas.parentElement.getBoundingClientRect();
-    canvas.width = rect.width || 800;
-    canvas.height = rect.height || 60;
-    const w = canvas.width, h = canvas.height;
-    ctx.clearRect(0, 0, w, h);
-    const step = Math.max(1, Math.floor(data.length / w));
-    ctx.fillStyle = '#7c5cff';
-    for (let i = 0; i < w; i++) {
-      const idx = Math.min(i * step, data.length - 1);
-      const val = Math.min(data[idx] || 0, 1);
-      const barHeight = val * h * 0.8;
-      const y = (h - barHeight) / 2;
-      ctx.fillRect(i, y, 2, barHeight);
+    <!-- LOG & PROGRESS -->
+    <div class="glass p-3 mt-2" style="flex-shrink:0">
+      <div class="flex justify-between items-center mb-1">
+        <span class="text-xs font-semibold text-zinc-500"><i class="fa-solid fa-terminal"></i> Log</span>
+        <button class="text-[10px] text-zinc-600 hover:text-zinc-300" id="clearLog">Clear</button>
+      </div>
+      <div id="logConsole" class="log-console"></div>
+      <div class="text-[10px] text-zinc-600 mt-1 text-right" id="progressText">Siap</div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // SETUP FFMPEG & STATE
+    // ============================================================
+    const { FFmpeg } = FFmpegWASM;
+    const { toBlobURL } = FFmpegUtil;
+
+    const $ = id => document.getElementById(id);
+    const audioInput = $('audioInput');
+    const uploadZone = $('uploadZone');
+    const fileList = $('fileList');
+    const fileInfo = $('fileInfo');
+    const logConsole = $('logConsole');
+    const clearLog = $('clearLog');
+    const progressText = $('progressText');
+
+    let ffmpeg = null;
+    let loaded = false;
+    let files = []; // { id, file, name, blob, duration, waveformData, start, end }
+    let selectedFileId = null;
+    let fileCounter = 0;
+
+    // ============================================================
+    // LOGGING
+    // ============================================================
+    function log(tag, msg) {
+      const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
+      const row = document.createElement('div');
+      row.className = 'log-line';
+      row.innerHTML = `<span class="log-tag ${tag.toLowerCase()}">[${tag.toUpperCase()}]</span><span class="text-zinc-500">${time}</span><span class="text-zinc-300">${msg}</span>`;
+      logConsole.appendChild(row);
+      logConsole.scrollTop = logConsole.scrollHeight;
     }
-  }
 
-  function updateRegionAndTime(id) {
-    const file = files.find(f => f.id === id);
-    if (!file) return;
-    const region = document.getElementById(`region-${id}`);
-    if (region) {
-      const dur = file.audioBuffer.duration;
-      region.style.left = (file.start / dur * 100) + '%';
-      region.style.width = ((file.end - file.start) / dur * 100) + '%';
+    function updateProgress(msg) { progressText.textContent = msg; }
+
+    clearLog.addEventListener('click', () => { logConsole.innerHTML = ''; });
+
+    // ============================================================
+    // BOOT FFMPEG
+    // ============================================================
+    async function bootFFmpeg() {
+      if (loaded) return;
+      try {
+        ffmpeg = new FFmpeg();
+        log('info', 'Memuat FFmpeg...');
+        await ffmpeg.load({
+          coreURL: await toBlobURL('https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.js', 'text/javascript'),
+          wasmURL: await toBlobURL('https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm', 'application/wasm'),
+          classWorkerURL: await toBlobURL('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/814.ffmpeg.js', 'text/javascript'),
+        });
+        loaded = true;
+        ffmpeg.on('progress', ({ progress }) => {
+          const p = Math.round(progress * 100);
+          progressText.textContent = `Memproses ${p}%`;
+        });
+        log('success', 'FFmpeg siap!');
+      } catch (e) {
+        log('error', `Gagal load: ${e.message}`);
+      }
     }
-    const timeLabel = document.getElementById(`time-${id}`);
-    if (timeLabel) {
-      timeLabel.textContent = `${file.start.toFixed(1)}s - ${file.end.toFixed(1)}s`;
+    bootFFmpeg();
+
+    // ============================================================
+    // UPLOAD
+    // ============================================================
+    uploadZone.addEventListener('click', () => audioInput.click());
+    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.style.borderColor = 'rgba(124,92,255,.6)'; });
+    uploadZone.addEventListener('dragleave', () => { uploadZone.style.borderColor = ''; });
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.style.borderColor = '';
+      if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+    });
+    audioInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFiles(e.target.files);
+      e.target.value = '';
+    });
+
+    async function handleFiles(fileListObj) {
+      const arr = Array.from(fileListObj);
+      for (const file of arr) {
+        if (!file.type.startsWith('audio/')) { log('error', `${file.name} bukan audio.`); continue; }
+        await processFile(file);
+      }
+      renderAll();
+      updateFileInfo();
     }
-  }
 
-  function removeFile(id) {
-    files = files.filter(f => f.id !== id);
-    if (selectedFileId === id) selectedFileId = null;
-    renderFileList();
-    updateFileInfo();
-    updateCropButton();
-  }
-
-  function updateCropButton() {
-    const hasSelected = files.some(f => f.id === selectedFileId);
-    cropBtn.disabled = !hasSelected || !loaded;
-  }
-
-  // ============================================
-  // POTONG FILE
-  // ============================================
-  cropBtn.addEventListener('click', async () => {
-    if (!loaded) { log('error', 'FFmpeg belum siap.'); return; }
-    const file = files.find(f => f.id === selectedFileId);
-    if (!file) return;
-    const start = file.start;
-    const end = file.end;
-    if (end - start < 0.5) { log('error', 'Region terlalu pendek (min 0.5 detik)'); return; }
-
-    cropBtn.disabled = true;
-    progressText.textContent = 'Memotong...';
-    log('process', `✂️ Potong ${file.name} dari ${start.toFixed(1)}s sampai ${end.toFixed(1)}s`);
-
-    try {
-      const ext = file.name.split('.').pop() || 'mp3';
-      const inputName = `input.${ext}`;
-      const outputName = `cropped.${ext}`;
-
-      const fileData = new Uint8Array(await file.file.arrayBuffer());
-      await ffmpeg.writeFile(inputName, fileData);
-
-      await ffmpeg.exec([
-        '-i', inputName,
-        '-ss', start.toString(),
-        '-to', end.toString(),
-        '-c', 'copy',
-        outputName
-      ]);
-
-      const data = await ffmpeg.readFile(outputName);
-      if (!data || data.byteLength === 0) throw new Error('Hasil potong kosong.');
-
-      const blob = new Blob([data.buffer], { type: file.file.type || 'audio/mpeg' });
-      const url = URL.createObjectURL(blob);
-      const newFile = new File([blob], `cropped_${file.name}`, { type: blob.type });
-
-      // Tambahkan hasil potong sebagai file baru
-      await processFile(newFile);
-
-      // Bersihkan
-      await ffmpeg.deleteFile(inputName).catch(() => {});
-      await ffmpeg.deleteFile(outputName).catch(() => {});
-
-      log('success', `✅ Potong selesai: ${newFile.name}`);
-      progressText.textContent = 'Potong selesai';
-    } catch (e) {
-      log('error', `Gagal potong: ${e.message}`);
-      progressText.textContent = 'Error';
+    async function processFile(file) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+        const duration = audioBuffer.duration;
+        const waveformData = getWaveformData(audioBuffer, 600);
+        const id = ++fileCounter;
+        files.push({ id, file, name: file.name, blob: null, duration, waveformData, start: 0, end: duration });
+        log('info', `✅ ${file.name} (${duration.toFixed(1)}s)`);
+      } catch (e) {
+        log('error', `Gagal decode ${file.name}: ${e.message}`);
+      }
     }
-    cropBtn.disabled = false;
-    updateCropButton();
-  });
 
-  // ============================================
-  // GABUNG SEMUA FILE
-  // ============================================
-  concatBtn.addEventListener('click', async () => {
-    if (!loaded) { log('error', 'FFmpeg belum siap.'); return; }
-    if (files.length < 2) { log('error', 'Butuh minimal 2 file untuk digabung.'); return; }
+    function getWaveformData(audioBuffer, points) {
+      const data = audioBuffer.getChannelData(0);
+      const step = Math.floor(data.length / points);
+      const result = [];
+      for (let i = 0; i < points; i++) {
+        let sum = 0;
+        for (let j = 0; j < step; j++) {
+          sum += Math.abs(data[(i * step) + j] || 0);
+        }
+        result.push(sum / step);
+      }
+      return result;
+    }
 
-    concatBtn.disabled = true;
-    progressText.textContent = 'Menggabung...';
-    log('process', `🔗 Gabung ${files.length} file`);
+    function updateFileInfo() {
+      fileInfo.textContent = files.length ? `${files.length} file terupload` : 'Belum ada file';
+    }
 
-    try {
-      // Tulis semua file ke WASM
-      const inputNames = [];
-      for (let i = 0; i < files.length; i++) {
-        const f = files[i];
+    // ============================================================
+    // RENDER
+    // ============================================================
+    function renderAll() {
+      renderFileList();
+      renderCropList();
+    }
+
+    function renderFileList() {
+      if (!files.length) { fileList.innerHTML = '<div class="text-center text-zinc-500 text-sm py-6">Belum ada file.</div>'; return; }
+      let html = '';
+      files.forEach((f, idx) => {
+        const isSelected = (f.id === selectedFileId);
+        html += `
+          <div class="file-card ${isSelected ? 'border-indigo-400/40' : ''}">
+            <div class="flex items-center justify-between gap-2 mb-1">
+              <span class="text-xs font-medium truncate">${f.name}</span>
+              <span class="text-[10px] text-zinc-500">${f.duration.toFixed(1)}s</span>
+            </div>
+            <div class="waveform-container" onclick="selectFile(${f.id})">
+              <canvas class="waveform" data-id="${f.id}"></canvas>
+            </div>
+          </div>
+        `;
+      });
+      fileList.innerHTML = html;
+      files.forEach(f => {
+        const canvas = document.querySelector(`canvas.waveform[data-id="${f.id}"]`);
+        if (canvas) drawWaveform(canvas, f.waveformData);
+      });
+    }
+
+    function renderCropList() {
+      const container = $('cropFileList');
+      if (!files.length) { container.innerHTML = '<div class="text-center text-zinc-500 text-sm py-6">Upload file dulu.</div>'; return; }
+      let html = '';
+      files.forEach(f => {
+        const isSelected = (f.id === selectedFileId);
+        html += `
+          <div class="file-card ${isSelected ? 'border-indigo-400/40' : ''}" onclick="selectFile(${f.id})">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-medium truncate">${f.name}</span>
+              <span class="text-[10px] text-zinc-500">${f.duration.toFixed(1)}s</span>
+            </div>
+            <div class="waveform-container">
+              <canvas class="waveform-crop" data-id="${f.id}"></canvas>
+              <div class="region-overlay" style="left:${(f.start/f.duration)*100}%;width:${((f.end-f.start)/f.duration)*100}%;"></div>
+            </div>
+            <div class="slider-group">
+              <span class="text-[9px] text-zinc-500 w-10">Start</span>
+              <input type="range" min="0" max="100" value="${(f.start/f.duration)*100}" class="start-slider" data-id="${f.id}">
+              <span class="text-[9px] text-zinc-500 w-10">End</span>
+              <input type="range" min="0" max="100" value="${(f.end/f.duration)*100}" class="end-slider" data-id="${f.id}">
+              <span class="text-[9px] text-zinc-500 w-20" id="time-${f.id}">${f.start.toFixed(1)}s - ${f.end.toFixed(1)}s</span>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+      files.forEach(f => {
+        const canvas = container.querySelector(`canvas.waveform-crop[data-id="${f.id}"]`);
+        if (canvas) drawWaveform(canvas, f.waveformData);
+      });
+      // Event Slider
+      container.querySelectorAll('.start-slider').forEach(sl => {
+        sl.addEventListener('input', (e) => {
+          const id = parseInt(sl.dataset.id);
+          const f = files.find(x => x.id === id);
+          if (!f) return;
+          const pct = parseFloat(sl.value) / 100;
+          f.start = Math.min(pct * f.duration, f.end - 0.5);
+          const endSl = container.querySelector(`.end-slider[data-id="${id}"]`);
+          if (endSl) endSl.min = sl.value;
+          updateCropRegion(id);
+          renderCropList(); // refresh
+        });
+      });
+      container.querySelectorAll('.end-slider').forEach(sl => {
+        sl.addEventListener('input', (e) => {
+          const id = parseInt(sl.dataset.id);
+          const f = files.find(x => x.id === id);
+          if (!f) return;
+          const pct = parseFloat(sl.value) / 100;
+          f.end = Math.max(pct * f.duration, f.start + 0.5);
+          const startSl = container.querySelector(`.start-slider[data-id="${id}"]`);
+          if (startSl) startSl.max = sl.value;
+          updateCropRegion(id);
+          renderCropList();
+        });
+      });
+    }
+
+    function drawWaveform(canvas, data) {
+      const ctx = canvas.getContext('2d');
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width || 400;
+      canvas.height = rect.height || 60;
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      const step = Math.max(1, Math.floor(data.length / w));
+      ctx.fillStyle = '#7c5cff';
+      for (let i = 0; i < w; i++) {
+        const idx = Math.min(i * step, data.length - 1);
+        const val = Math.min(data[idx] || 0, 1);
+        const barHeight = val * h * 0.8;
+        ctx.fillRect(i, (h - barHeight) / 2, 2, barHeight);
+      }
+    }
+
+    function updateCropRegion(id) {
+      const f = files.find(x => x.id === id);
+      if (!f) return;
+      const container = $('cropFileList');
+      const region = container.querySelector(`.region-overlay`);
+      // We'll just rely on re-render for simplicity.
+    }
+
+    window.selectFile = function(id) {
+      selectedFileId = id;
+      renderAll();
+      $('cropStatus').textContent = `File terpilih: ${files.find(f => f.id === id)?.name || '-'}`;
+      $('denoiseStatus').textContent = `File terpilih: ${files.find(f => f.id === id)?.name || '-'}`;
+      $('normStatus').textContent = `File terpilih: ${files.find(f => f.id === id)?.name || '-'}`;
+      $('effectsStatus').textContent = `File terpilih: ${files.find(f => f.id === id)?.name || '-'}`;
+      $('rbxStatus').textContent = `File terpilih: ${files.find(f => f.id === id)?.name || '-'}`;
+    };
+
+    // ============================================================
+    // NAVIGATION
+    // ============================================================
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', () => {
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        item.classList.add('active');
+        const tab = item.dataset.tab;
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        const target = document.getElementById(`tab-${tab}`);
+        if (target) target.classList.remove('hidden');
+        if (tab === 'crop' || tab === 'dashboard') renderAll();
+      });
+    });
+
+    // ============================================================
+    // CROP
+    // ============================================================
+    $('cropBtn').addEventListener('click', async () => {
+      if (!loaded) { log('error', 'FFmpeg belum siap.'); return; }
+      const f = files.find(x => x.id === selectedFileId);
+      if (!f) { log('error', 'Pilih file dulu.'); return; }
+      if (f.end - f.start < 0.5) { log('error', 'Region terlalu pendek.'); return; }
+      $('cropBtn').disabled = true;
+      log('process', `✂️ Memotong ${f.name} (${f.start.toFixed(1)}-${f.end.toFixed(1)})`);
+      updateProgress('Memotong...');
+      try {
         const ext = f.name.split('.').pop() || 'mp3';
-        const name = `file_${i}.${ext}`;
+        const inputName = `in.${ext}`;
+        const outputName = `out.${ext}`;
         const data = new Uint8Array(await f.file.arrayBuffer());
-        await ffmpeg.writeFile(name, data);
-        inputNames.push(name);
-      }
-
-      // Buat file list untuk concat
-      const listContent = inputNames.map(n => `file '${n}'`).join('\n');
-      await ffmpeg.writeFile('list.txt', listContent);
-
-      const outputName = 'merged.mp3';
-      await ffmpeg.exec([
-        '-f', 'concat',
-        '-safe', '0',
-        '-i', 'list.txt',
-        '-c', 'copy',
-        outputName
-      ]);
-
-      const data = await ffmpeg.readFile(outputName);
-      if (!data || data.byteLength === 0) throw new Error('Hasil gabung kosong.');
-
-      const blob = new Blob([data.buffer], { type: 'audio/mpeg' });
-      const url = URL.createObjectURL(blob);
-      const newFile = new File([blob], `merged_audio.mp3`, { type: 'audio/mpeg' });
-
-      // Tambahkan hasil gabung sebagai file baru
-      await processFile(newFile);
-
-      // Bersihkan file WASM
-      for (const name of inputNames) {
-        await ffmpeg.deleteFile(name).catch(() => {});
-      }
-      await ffmpeg.deleteFile('list.txt').catch(() => {});
-      await ffmpeg.deleteFile(outputName).catch(() => {});
-
-      log('success', `✅ Gabung selesai! Total ${files.length} file menjadi satu.`);
-      progressText.textContent = 'Gabung selesai';
-    } catch (e) {
-      log('error', `Gagal gabung: ${e.message}`);
-      progressText.textContent = 'Error';
-    }
-    concatBtn.disabled = false;
-  });
-
-  // ============================================
-  // RESET
-  // ============================================
-  resetBtn.addEventListener('click', () => {
-    files = [];
-    selectedFileId = null;
-    renderFileList();
-    updateFileInfo();
-    updateCropButton();
-    progressText.textContent = 'Reset';
-    log('info', '🔄 Semua file direset');
-  });
-
-  // ============================================
-  // INIT
-  // ============================================
-  log('info', '🎚️ Editor Audio siap! Upload file, atur region, potong atau gabung.');
-  updateFileInfo();
-  updateCropButton();
-
-  // ============================================
-  // FUNGSI BANTU UNTUK RESIZE WAVEFORM SAAT WINDOW RESIZE
-  // ============================================
-  window.addEventListener('resize', () => {
-    // Redraw all waveforms
-    files.forEach(f => {
-      const canvas = document.querySelector(`canvas.waveform[data-id="${f.id}"]`);
-      if (canvas) drawWaveform(canvas, f.waveformData);
+        await ffmpeg.writeFile(inputName, data);
+        await ffmpeg.exec(['-i', inputName, '-ss', f.start.toString(), '-to', f.end.toString(), '-c', 'copy', outputName]);
+        const outData = await ffmpeg.readFile(outputName);
+        if (!outData || outData.byteLength === 0) throw new Error('Hasil kosong');
+        const blob = new Blob([outData.buffer], { type: f.file.type || 'audio/mpeg' });
+        const newFile = new File([blob], `cropped_${f.name}`, { type: blob.type });
+        await processFile(newFile);
+        await ffmpeg.deleteFile(inputName).catch(() => {});
+        await ffmpeg.deleteFile(outputName).catch(() => {});
+        log('success', `✅ Potong selesai: cropped_${f.name}`);
+        renderAll();
+        updateFileInfo();
+      } catch (e) { log('error', `Gagal potong: ${e.message}`); }
+      $('cropBtn').disabled = false;
+      updateProgress('Siap');
     });
-  });
-</script>
+
+    // ============================================================
+    // CONCAT
+    // ============================================================
+    $('concatBtn').addEventListener('click', async () => {
+      if (!loaded) { log('error', 'FFmpeg belum siap.'); return; }
+      if (files.length < 2) { log('error', 'Minimal 2 file.'); return; }
+      $('concatBtn').disabled = true;
+      log('process', `🔗 Menggabung ${files.length} file...`);
+      updateProgress('Menggabung...');
+      try {
+        const inputNames = [];
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i];
+          const ext = f.name.split('.').pop() || 'mp3';
+          const name = `f_${i}.${ext}`;
+          const data = new Uint8Array(await f.file.arrayBuffer());
+          await ffmpeg.writeFile(name, data);
+          inputNames.push(name);
+        }
+        const listContent = inputNames.map(n => `file '${n}'`).join('\n');
+        await ffmpeg.writeFile('list.txt', listContent);
+        const outputName = 'merged.mp3';
+        await ffmpeg.exec(['-f', 'concat', '-safe', '0', '-i', 'list.txt', '-c', 'copy', outputName]);
+        const outData = await ffmpeg.readFile(outputName);
+        if (!outData || outData.byteLength === 0) throw new Error('Hasil gabung kosong');
+        const blob = new Blob([outData.buffer], { type: 'audio/mpeg' });
+        const newFile = new File([blob], 'merged_audio.mp3', { type: 'audio/mpeg' });
+        await processFile(newFile);
+        for (const n of inputNames) await ffmpeg.deleteFile(n).catch(() => {});
+        await ffmpeg.deleteFile('list.txt').catch(() => {});
+        await ffmpeg.deleteFile(outputName).catch(() => {});
+        log('success', `✅ Gabung selesai!`);
+        renderAll();
+        updateFileInfo();
+      } catch (e) { log('error', `Gagal gabung: ${e.message}`); }
+      $('concatBtn').disabled = false;
+      updateProgress('Siap');
+    });
+
+    // ============================================================
+    // DENOISE (Pro)
+    // ============================================================
+    $('denoiseBtn').addEventListener('click', async () => {
+      if (!loaded) { log('error', 'FFmpeg belum siap.'); return; }
+      const f = files.find(x => x.id === selectedFileId);
+      if (!f) { log('error', 'Pilih file.'); return; }
+      const strength = parseInt($('denoiseStrength').value);
+      log('process', `🧹 Denoise (${strength}dB) pada ${f.name}`);
+      updateProgress('Denoise...');
+      $('denoiseBtn').disabled = true;
+      try {
+        const ext = f.name.split('.').pop() || 'mp3';
+        const inName = `in.${ext}`, outName = `out.${ext}`;
+        const data = new Uint8Array(await f.file.arrayBuffer());
+        await ffmpeg.writeFile(inName, data);
+        await ffmpeg.exec(['-i', inName, '-af', `afftdn=nr=${strength}:nf=-40`, outName]);
+        const outData = await ffmpeg.readFile(outName);
+        if (!outData || outData.byteLength === 0) throw new Error('Hasil kosong');
+        const blob = new Blob([outData.buffer], { type: f.file.type || 'audio/mpeg' });
+        const newFile = new File([blob], `denoised_${f.name}`, { type: blob.type });
+        await processFile(newFile);
+        await ffmpeg.deleteFile(inName).catch(() => {});
+        await ffmpeg.deleteFile(outName).catch(() => {});
+        log('success', `✅ Denoise selesai.`);
+        renderAll(); updateFileInfo();
+      } catch (e) { log('error', `Denoise gagal: ${e.message}`); }
+      $('denoiseBtn').disabled = false;
+      updateProgress('Siap');
+    });
+
+    // ============================================================
+    // NORMALIZE (Pro)
+    // ============================================================
+    $('normalizeBtn').addEventListener('click', async () => {
+      if (!loaded) { log('error', 'FFmpeg belum siap.'); return; }
+      const f = files.find(x => x.id === selectedFileId);
+      if (!f) { log('error', 'Pilih file.'); return; }
+      const target = parseFloat($('normTarget').value);
+      log('process', `🔊 Normalisasi ${target} LUFS pada ${f.name}`);
+      updateProgress('Normalisasi...');
+      $('normalizeBtn').disabled = true;
+      try {
+        const ext = f.name.split('.').pop() || 'mp3';
+        const inName = `in.${ext}`, outName = `out.${ext}`;
+        const data = new Uint8Array(await f.file.arrayBuffer());
+        await ffmpeg.writeFile(inName, data);
+        await ffmpeg.exec(['-i', inName, '-af', `loudnorm=I=${target}:TP=-1:LRA=11`, outName]);
+        const outData = await ffmpeg.readFile(outName);
+        if (!outData || outData.byteLength === 0) throw new Error('Hasil kosong');
+        const blob = new Blob([outData.buffer], { type: f.file.type || 'audio/mpeg' });
+        const newFile = new File([blob], `normalized_${f.name}`, { type: blob.type });
+        await processFile(newFile);
+        await ffmpeg.deleteFile(inName).catch(() => {});
+        await ffmpeg.deleteFile(outName).catch(() => {});
+        log('success', `✅ Normalisasi selesai.`);
+        renderAll(); updateFileInfo();
+      } catch (e) { log('error', `Normalisasi gagal: ${e.message}`); }
+      $('normalizeBtn').disabled = false;
+      updateProgress('Siap');
+    });
+
+    // ============================================================
+    // EFFECTS (Pro)
+    // ============================================================
+    $('effectsBtn').addEventListener('click', async () => {
+      if (!loaded) { log('error', 'FFmpeg belum siap.'); return; }
+      const f = files.find(x => x.id === selectedFileId);
+      if (!f) { log('error', 'Pilih file.'); return; }
+      const bass = parseFloat($('eqBass').value);
+      const mid = parseFloat($('eqMid').value);
+      const treble = parseFloat($('eqTreble').value);
+      const echo = parseFloat($('echoAmount').value) / 100;
+      log('process', `🎛️ Efek (B${bass} M${mid} T${treble} E${echo}) pada ${f.name}`);
+      updateProgress('Efek...');
+      $('effectsBtn').disabled = true;
+      try {
+        const ext = f.name.split('.').pop() || 'mp3';
+        const inName = `in.${ext}`, outName = `out.${ext}`;
+        const data = new Uint8Array(await f.file.arrayBuffer());
+        await ffmpeg.writeFile(inName, data);
+        let filter = `equalizer=f=100:width_type=o:width=1:g=${bass},equalizer=f=1000:width_type=o:width=1:g=${mid},equalizer=f=5000:width_type=o:width=1:g=${treble}`;
+        if (echo > 0.01) {
+          const delay = Math.round(50 + echo * 200);
+          const decay = (0.3 + echo * 0.5).toFixed(2);
+          filter += `,aecho=0.8:${decay}:${delay}:${decay}`;
+        }
+        await ffmpeg.exec(['-i', inName, '-af', filter, outName]);
+        const outData = await ffmpeg.readFile(outName);
+        if (!outData || outData.byteLength === 0) throw new Error('Hasil kosong');
+        const blob = new Blob([outData.buffer], { type: f.file.type || 'audio/mpeg' });
+        const newFile = new File([blob], `effected_${f.name}`, { type: blob.type });
+        await processFile(newFile);
+        await ffmpeg.deleteFile(inName).catch(() => {});
+        await ffmpeg.deleteFile(outName).catch(() => {});
+        log('success', `✅ Efek diterapkan.`);
+        renderAll(); updateFileInfo();
+      } catch (e) { log('error', `Efek gagal: ${e.message}`); }
+      $('effectsBtn').disabled = false;
+      updateProgress('Siap');
+    });
+
+    // ============================================================
+    // ROBLOX PRESET (Pro)
+    // ============================================================
+    $('rbxBtn').addEventListener('click', async () => {
+      if (!loaded) { log('error', 'FFmpeg belum siap.'); return; }
+      const f = files.find(x => x.id === selectedFileId);
+      if (!f) { log('error', 'Pilih file.'); return; }
+      const speed = parseFloat($('rbxSpeed').value);
+      const lowpassHz = Math.max(3000, Math.min(16000, Math.floor((24000 / speed) * 0.95)));
+      log('process', `🎮 Roblox Preset (${speed}x, Lowpass ${lowpassHz}Hz) pada ${f.name}`);
+      updateProgress('Roblox Preset...');
+      $('rbxBtn').disabled = true;
+      try {
+        const ext = f.name.split('.').pop() || 'mp3';
+        const inName = `in.${ext}`, outName = `out.ogg`;
+        const data = new Uint8Array(await f.file.arrayBuffer());
+        await ffmpeg.writeFile(inName, data);
+        const filter = `lowpass=f=${lowpassHz},asetrate=44100*${speed},aresample=48000:filter_size=64:cutoff=0.98,loudnorm=I=-16:TP=-1:LRA=12,alimiter=limit=0.95:attack=5:release=50`;
+        await ffmpeg.exec(['-i', inName, '-af', filter, '-c:a', 'libvorbis', '-q:a', '6', outName]);
+        const outData = await ffmpeg.readFile(outName);
+        if (!outData || outData.byteLength === 0) throw new Error('Hasil kosong');
+        const blob = new Blob([outData.buffer], { type: 'audio/ogg' });
+        const newFile = new File([blob], `roblox_${speed}x_${f.name.replace(/\..+$/, '')}.ogg`, { type: 'audio/ogg' });
+        await processFile(newFile);
+        await ffmpeg.deleteFile(inName).catch(() => {});
+        await ffmpeg.deleteFile(outName).catch(() => {});
+        log('success', `✅ Roblox Preset selesai! (PlaybackSpeed = ${(1/speed).toFixed(3)})`);
+        renderAll(); updateFileInfo();
+      } catch (e) { log('error', `Roblox gagal: ${e.message}`); }
+      $('rbxBtn').disabled = false;
+      updateProgress('Siap');
+    });
+
+    // ============================================================
+    // SLIDER UI UPDATES
+    // ============================================================
+    $('denoiseStrength').addEventListener('input', () => $('denoiseVal').textContent = $('denoiseStrength').value + ' dB');
+    $('normTarget').addEventListener('input', () => $('normVal').textContent = $('normTarget').value + ' LUFS');
+    $('rbxSpeed').addEventListener('input', () => {
+      const v = parseFloat($('rbxSpeed').value);
+      $('rbxSpeedVal').textContent = v.toFixed(1) + 'x';
+    });
+    $('eqBass').addEventListener('input', () => $('eqBassVal').textContent = $('eqBass').value);
+    $('eqMid').addEventListener('input', () => $('eqMidVal').textContent = $('eqMid').value);
+    $('eqTreble').addEventListener('input', () => $('eqTrebleVal').textContent = $('eqTreble').value);
+    $('echoAmount').addEventListener('input', () => $('echoVal').textContent = $('echoAmount').value + '%');
+
+    // ============================================================
+    // INIT
+    // ============================================================
+    log('info', '🚀 Studio Audio Pro siap! Upload file.');
+    renderAll();
+    updateFileInfo();
+    $('cropStatus').textContent = 'Pilih file dulu';
+    $('denoiseStatus').textContent = 'Pilih file dulu';
+    $('normStatus').textContent = 'Pilih file dulu';
+    $('effectsStatus').textContent = 'Pilih file dulu';
+    $('rbxStatus').textContent = 'Pilih file dulu';
+
+    window.addEventListener('resize', () => {
+      // Re-draw waveforms
+      document.querySelectorAll('canvas.waveform, canvas.waveform-crop').forEach(c => {
+        const id = parseInt(c.dataset.id);
+        const f = files.find(x => x.id === id);
+        if (f) drawWaveform(c, f.waveformData);
+      });
+    });
+  </script>
 </body>
 </html>
