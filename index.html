@@ -97,6 +97,9 @@
           <button class="btn-ghost w-full justify-center text-sm py-2 text-zinc-500" id="stopPlayback">
             <i class="fa-solid fa-stop"></i> Stop Semua
           </button>
+          <button class="btn-primary w-full justify-center text-sm py-2" id="downloadOgg" disabled>
+            <i class="fa-solid fa-download"></i> Download OGG
+          </button>
         </div>
         <div class="text-[10px] text-zinc-600 text-center mt-1" id="playbackStatus">Pilih file & proses dulu</div>
         <!-- Hidden audio elements -->
@@ -150,6 +153,7 @@
     const playOriginal = $('playOriginal');
     const playProcessed = $('playProcessed');
     const stopPlayback = $('stopPlayback');
+    const downloadOgg = $('downloadOgg');
     const playbackStatus = $('playbackStatus');
     const audioOrig = $('audioOriginal');
     const audioProc = $('audioProcessed');
@@ -360,6 +364,7 @@
         log('info', `🔊 PlaybackRate diset ke ${pbRate.toFixed(3)} (1/${speed})`);
         updateStatus('Siap diputar!', 'success');
         playProcessed.disabled = false;
+        downloadOgg.disabled = false;
         progressText.textContent = `Selesai (${(processedBlob.size / 1024 / 1024).toFixed(1)} MB)`;
 
         // Bersihin file WASM
@@ -405,6 +410,19 @@
 
     stopPlayback.addEventListener('click', stopAllAudio);
 
+    downloadOgg.addEventListener('click', () => {
+      if (!processedBlob || !processedUrl) return;
+      const baseName = originalFile ? originalFile.name.replace(/\.[^/.]+$/, '') : 'audio';
+      const speedTag = parseFloat(speedSlider.value).toFixed(1).replace('.', '_');
+      const a = document.createElement('a');
+      a.href = processedUrl;
+      a.download = `${baseName}_${speedTag}x.ogg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      log('success', `⬇️ Download dimulai: ${a.download}`);
+    });
+
     // Reset
     resetBtn.addEventListener('click', () => {
       stopAllAudio();
@@ -418,6 +436,7 @@
       processBtn.disabled = true;
       playOriginal.disabled = true;
       playProcessed.disabled = true;
+      downloadOgg.disabled = true;
       progressText.textContent = 'Belum diproses';
       logConsole.innerHTML = '';
       log('info', '🔄 Lab di-reset');
