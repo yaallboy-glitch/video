@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎧 Lab Normalisasi Nakal</title>
+  <title>🎧 Lab Normalisasi Nakal - Auto Max</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     * { box-sizing: border-box; }
@@ -27,6 +27,7 @@
     .upload-zone { border: 1.5px dashed rgba(255,255,255,.2); transition: all .3s; cursor: pointer; background: rgba(255,255,255,.02); padding: 20px; border-radius: 12px; text-align: center; }
     .upload-zone:hover { border-color: rgba(124,92,255,.5); background: rgba(124,92,255,.05); }
     .badge { font-size: 10px; background: rgba(255,255,255,.05); padding: 2px 8px; border-radius: 20px; border: 1px solid rgba(255,255,255,.08); }
+    .param-display { font-size: 11px; color: #a1a1aa; background: rgba(255,255,255,.04); border-radius: 6px; padding: 4px 8px; }
   </style>
 </head>
 <body class="min-h-screen p-4 flex items-start justify-center">
@@ -36,8 +37,8 @@
     <!-- HEADER -->
     <div class="flex items-center justify-between mb-4">
       <div>
-        <h1 class="text-2xl font-bold tracking-tight">🎧 Lab Normalisasi <span class="text-indigo-400">Nakal</span></h1>
-        <p class="text-xs text-zinc-500">Uji coba parameter FFmpeg + simulasi PlaybackSpeed Roblox</p>
+        <h1 class="text-2xl font-bold tracking-tight">🎧 Lab Normalisasi <span class="text-indigo-400">Auto-Max</span></h1>
+        <p class="text-xs text-zinc-500">Uji coba Auto-Max: Lowpass, High-Shelf, Loudnorm dihitung otomatis</p>
       </div>
       <div id="statusBadge" class="badge text-zinc-500">⏳ Siap</div>
     </div>
@@ -55,48 +56,24 @@
     <!-- MAIN GRID: PARAMETER + PLAYBACK -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-      <!-- KOLOM KIRI: PARAMETER -->
+      <!-- KOLOM KIRI: PARAMETER (HANYA SPEED) -->
       <div class="lg:col-span-2 glass rounded-xl p-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
+        <div class="grid grid-cols-1 gap-4">
           <!-- Speed -->
           <div>
             <div class="slider-label"><span>Speed Convert</span><span id="speedVal">3.0x</span></div>
             <input type="range" id="speedSlider" min="2.0" max="10.0" step="0.1" value="3.0">
             <p class="text-[9px] text-zinc-600 mt-0.5">Simulasi Special (2.0 – 10.0x)</p>
           </div>
+        </div>
 
-          <!-- Lowpass Pre-Filter -->
-          <div>
-            <div class="slider-label"><span>Lowpass Pre-Filter</span><span id="lowpassVal">OFF</span></div>
-            <input type="range" id="lowpassSlider" min="0" max="18000" step="100" value="0">
-            <p class="text-[9px] text-zinc-600 mt-0.5">0 = OFF, potong frekuensi tinggi</p>
-          </div>
-
-          <!-- High-Shelf Boost -->
-          <div>
-            <div class="slider-label"><span>High-Shelf Boost (5kHz)</span><span id="hshelfVal">0 dB</span></div>
-            <input type="range" id="hshelfSlider" min="-6" max="6" step="0.5" value="0">
-            <p class="text-[9px] text-zinc-600 mt-0.5">+dB = lebih cerah, -dB = redup</p>
-          </div>
-
-          <!-- Loudnorm Target -->
-          <div>
-            <div class="slider-label"><span>Loudnorm Target</span><span id="loudnormVal">-14 LUFS</span></div>
-            <input type="range" id="loudnormSlider" min="-18" max="-8" step="0.5" value="-14">
-            <p class="text-[9px] text-zinc-600 mt-0.5">Semakin rendah → lebih pelan</p>
-          </div>
-
-          <!-- Limiter Mode -->
-          <div class="md:col-span-2 flex items-center gap-4">
-            <span class="text-xs text-zinc-400 font-medium">Limiter Mode:</span>
-            <div class="flex gap-2">
-              <button class="btn-ghost text-xs py-1 px-3 border-zinc-700" id="limiterSoft">Soft</button>
-              <button class="btn-ghost text-xs py-1 px-3 border-indigo-400 text-indigo-300" id="limiterHard">Hard</button>
-            </div>
-            <span class="text-[10px] text-zinc-600" id="limiterLabel">Hard</span>
-          </div>
-
+        <!-- TAMPILAN PARAMETER AUTO-MAX -->
+        <div class="mt-3 flex flex-wrap items-center gap-2 p-2 rounded-lg bg-white/5">
+          <span class="text-[10px] text-zinc-400 font-medium">Auto-Max:</span>
+          <span class="param-display" id="autoLowpass">Lowpass: 7600 Hz</span>
+          <span class="param-display" id="autoHShelf">Shelf: +1.6 dB</span>
+          <span class="param-display" id="autoLoudnorm">LUFS: -12</span>
+          <span class="param-display" id="autoLimiter">Limiter: Hard</span>
         </div>
 
         <!-- AKSI -->
@@ -152,7 +129,7 @@
     const FFMPEG_CORE_VERSION = '0.12.6';
     const FFMPEG_VERSION = '0.12.10';
     const { FFmpeg } = FFmpegWASM;
-    const { toBlobURL, fetchFile } = FFmpegUtil;
+    const { toBlobURL } = FFmpegUtil;
 
     const $ = id => document.getElementById(id);
 
@@ -169,15 +146,6 @@
 
     const speedSlider = $('speedSlider');
     const speedVal = $('speedVal');
-    const lowpassSlider = $('lowpassSlider');
-    const lowpassVal = $('lowpassVal');
-    const hshelfSlider = $('hshelfSlider');
-    const hshelfVal = $('hshelfVal');
-    const loudnormSlider = $('loudnormSlider');
-    const loudnormVal = $('loudnormVal');
-    const limiterSoft = $('limiterSoft');
-    const limiterHard = $('limiterHard');
-    const limiterLabel = $('limiterLabel');
 
     const playOriginal = $('playOriginal');
     const playProcessed = $('playProcessed');
@@ -186,6 +154,12 @@
     const audioOrig = $('audioOriginal');
     const audioProc = $('audioProcessed');
 
+    // Auto-Max display elements
+    const autoLowpass = $('autoLowpass');
+    const autoHShelf = $('autoHShelf');
+    const autoLoudnorm = $('autoLoudnorm');
+    const autoLimiter = $('autoLimiter');
+
     let ffmpeg = null;
     let loaded = false;
     let originalFile = null;
@@ -193,7 +167,6 @@
     let processedUrl = null;
     let originalUrl = null;
     let currentSpeed = 3.0;
-    let limiterMode = 'hard';
 
     // ============================================
     // LOGGING
@@ -216,36 +189,44 @@
     clearLog.addEventListener('click', () => { logConsole.innerHTML = ''; });
 
     // ============================================
-    // SLIDER UI
+    // SLIDER UI (hanya speed)
     // ============================================
     speedSlider.addEventListener('input', () => {
       currentSpeed = parseFloat(speedSlider.value);
       speedVal.textContent = currentSpeed.toFixed(1) + 'x';
-    });
-    lowpassSlider.addEventListener('input', () => {
-      const v = parseInt(lowpassSlider.value);
-      lowpassVal.textContent = v === 0 ? 'OFF' : v + ' Hz';
-    });
-    hshelfSlider.addEventListener('input', () => {
-      const v = parseFloat(hshelfSlider.value);
-      hshelfVal.textContent = (v > 0 ? '+' : '') + v.toFixed(1) + ' dB';
-    });
-    loudnormSlider.addEventListener('input', () => {
-      loudnormVal.textContent = parseFloat(loudnormSlider.value).toFixed(1) + ' LUFS';
+      // Update tampilan Auto-Max sesuai speed
+      updateAutoMaxDisplay(currentSpeed);
     });
 
-    limiterSoft.addEventListener('click', () => {
-      limiterMode = 'soft';
-      limiterSoft.className = 'btn-ghost text-xs py-1 px-3 border-indigo-400 text-indigo-300';
-      limiterHard.className = 'btn-ghost text-xs py-1 px-3 border-zinc-700 text-zinc-400';
-      limiterLabel.textContent = 'Soft';
-    });
-    limiterHard.addEventListener('click', () => {
-      limiterMode = 'hard';
-      limiterHard.className = 'btn-ghost text-xs py-1 px-3 border-indigo-400 text-indigo-300';
-      limiterSoft.className = 'btn-ghost text-xs py-1 px-3 border-zinc-700 text-zinc-400';
-      limiterLabel.textContent = 'Hard';
-    });
+    // ============================================
+    // AUTO-MAX: hitung parameter otomatis
+    // ============================================
+    function computeAutoMax(speed) {
+      // Lowpass: bunuh aliasing berdasarkan speed
+      let lowpass = Math.floor((24000 / speed) * 0.95);
+      lowpass = Math.max(4000, Math.min(18000, lowpass));
+
+      // High-Shelf: boost jika lowpass tinggi
+      let shelf = (lowpass - 6000) / 1000;
+      shelf = Math.max(0, Math.min(3, shelf));
+      shelf = Math.round(shelf * 10) / 10;
+
+      // Loudnorm target -12 LUFS (keras & stabil)
+      const lufs = -12;
+
+      // Limiter selalu Hard
+      const limiter = 'hard';
+
+      return { lowpass, shelf, lufs, limiter };
+    }
+
+    function updateAutoMaxDisplay(speed) {
+      const params = computeAutoMax(speed);
+      autoLowpass.textContent = `Lowpass: ${params.lowpass} Hz`;
+      autoHShelf.textContent = `Shelf: +${params.shelf.toFixed(1)} dB`;
+      autoLoudnorm.textContent = `LUFS: ${params.lufs}`;
+      autoLimiter.textContent = `Limiter: ${params.limiter.charAt(0).toUpperCase() + params.limiter.slice(1)}`;
+    }
 
     // ============================================
     // UPLOAD
@@ -274,6 +255,8 @@
       playOriginal.disabled = false;
       log('info', `File uploaded: ${file.name}`);
       updateStatus('Siap diproses', 'info');
+      // Update Auto-Max display sesuai speed awal
+      updateAutoMaxDisplay(currentSpeed);
     }
 
     // ============================================
@@ -307,7 +290,7 @@
     bootFFmpeg();
 
     // ============================================
-    // PROSES
+    // PROSES (dengan Auto-Max)
     // ============================================
     processBtn.addEventListener('click', async () => {
       if (!loaded || !originalFile) return;
@@ -316,52 +299,48 @@
       updateStatus('Memproses...', 'info');
       log('process', '========== PROSES DIMULAI ==========');
 
-        try {
-  const speed = parseFloat(speedSlider.value);
-  const lowpassHz = parseInt(lowpassSlider.value);
-  const hshelf = parseFloat(hshelfSlider.value);
-  const lufs = parseFloat(loudnormSlider.value);
-  const limiter = limiterMode;
+      try {
+        const speed = parseFloat(speedSlider.value);
+        
+        // ===== AUTO-MAX: hitung parameter =====
+        const params = computeAutoMax(speed);
+        const lowpassHz = params.lowpass;
+        const hshelf = params.shelf;
+        const lufs = params.lufs;
+        const limiter = params.limiter;
 
-  const srcName = 'input.' + (originalFile.name.split('.').pop() || 'mp3');
-  const outName = 'output.ogg';
+        log('info', `⚡ Auto-Max: Speed ${speed}x | Lowpass ${lowpassHz}Hz | Shelf +${hshelf}dB | LUFS ${lufs} | Limiter ${limiter}`);
+        progressText.textContent = `Auto: LP${lowpassHz}Hz +${hshelf}dB`;
 
-  log('info', `Speed: ${speed}x | Lowpass: ${lowpassHz === 0 ? 'OFF' : lowpassHz+'Hz'} | Shelf: ${hshelf}dB | LUFS: ${lufs} | Limiter: ${limiter}`);
+        const srcName = 'input.' + (originalFile.name.split('.').pop() || 'mp3');
+        const outName = 'output.ogg';
 
-  // --- PERBAIKAN UNTUK iOS ---
-  const fileData = new Uint8Array(await originalFile.arrayBuffer());
-  await ffmpeg.writeFile(srcName, fileData);
-  // ---------------------------
+        // Baca file (arrayBuffer untuk iOS)
+        const fileData = new Uint8Array(await originalFile.arrayBuffer());
+        await ffmpeg.writeFile(srcName, fileData);
 
-  let filter = '';
+        // Build filter chain
+        let filter = '';
 
-        // 1. Lowpass Pre-Filter (jika aktif)
-        if (lowpassHz > 0) {
-          filter += `lowpass=f=${lowpassHz},`;
-        }
+        // Lowpass (selalu aktif)
+        filter += `lowpass=f=${lowpassHz},`;
 
-        // 2. Speed Up (asetrate) + Resample ke 48kHz
-        const srcRate = 44100; // default, tapi kita coba baca dari file? biar simpel, fallback.
-        // Kita ambil sample rate dari AudioContext kalau perlu, tapi untuk uji coba cukup 44100.
+        // Speed Up + Resample ke 48kHz
+        const srcRate = 44100; // fallback
         filter += `asetrate=${srcRate}*${speed},aresample=48000:filter_size=64:cutoff=0.98,`;
 
-        // 3. High-Shelf Boost (jika tidak 0)
-        if (hshelf !== 0) {
-          filter += `equalizer=f=5000:width_type=o:width=0.5:g=${hshelf},`;
+        // High-Shelf Boost (jika > 0)
+        if (hshelf > 0) {
+          filter += `equalizer=f=5000:width_type=o:width=0.5:g=+${hshelf},`;
         }
 
-        // 4. Loudnorm (target lufs)
+        // Loudnorm target -12 LUFS
         filter += `loudnorm=I=${lufs}:TP=-0.5:LRA=12,`;
 
-        // 5. Limiter (Hard atau Soft)
-        if (limiter === 'hard') {
-          filter += `alimiter=limit=0.97:attack=3:release=30:level_in=1:level_out=1`;
-        } else {
-          // Soft = lebih natural, pakai compand yang ringan
-          filter += `compand=attacks=0.001:decays=0.2:points=-70/-70|-30/-25|-12/-9|0/-3|20/-3`;
-        }
+        // Limiter Hard
+        filter += `alimiter=limit=0.97:attack=3:release=30:level_in=1:level_out=1`;
 
-        // Jalankan FFmpeg
+        // Eksekusi FFmpeg
         await ffmpeg.exec(['-i', srcName, '-af', filter, '-c:a', 'libvorbis', '-q:a', '6', outName]);
 
         // Baca hasil
@@ -383,7 +362,7 @@
         playProcessed.disabled = false;
         progressText.textContent = `Selesai (${(processedBlob.size / 1024 / 1024).toFixed(1)} MB)`;
 
-        // Bersihin file WASM biar gak numpuk
+        // Bersihin file WASM
         await ffmpeg.deleteFile(srcName).catch(() => {});
         await ffmpeg.deleteFile(outName).catch(() => {});
 
@@ -447,14 +426,16 @@
     });
 
     // ============================================
-    // TOMBOL KEYBOARD SHORTCUT (opsional)
+    // KEYBOARD SHORTCUT
     // ============================================
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !processBtn.disabled) processBtn.click();
       if (e.key === ' ' || e.key === 'Space') { e.preventDefault(); stopAllAudio(); }
     });
 
-    log('info', '🚀 Lab Normalisasi Nakal siap! Upload lagu & mulai eksperimen.');
+    // Inisialisasi display Auto-Max
+    updateAutoMaxDisplay(currentSpeed);
+    log('info', '🚀 Lab Normalisasi Auto-Max siap! Upload lagu & mulai eksperimen.');
   </script>
 </body>
 </html>
