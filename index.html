@@ -86,6 +86,28 @@
     .track-remove { color: #71717a; cursor: pointer; flex-shrink: 0; padding: 4px; }
     .track-remove:hover { color: #f87171; }
 
+    /* ===== EDIT MULTI-TRACK (mirip GarageBand main view) ===== */
+    .edit-timeline-wrap { position: relative; background: #080c1e; border: 1px solid rgba(255,255,255,.06); border-radius: 10px; overflow: auto; max-height: 60vh; }
+    .edit-ruler { position: sticky; top: 0; z-index: 5; height: 22px; background: #0d1230; border-bottom: 1px solid rgba(255,255,255,.08); margin-left: 150px; }
+    .edit-ruler span { position: absolute; top: 3px; font-size: 9px; color: #71717a; }
+    .edit-tracks { position: relative; }
+    .edit-track-row { display: flex; border-bottom: 1px solid rgba(255,255,255,.05); height: 56px; }
+    .edit-track-header { width: 150px; flex-shrink: 0; padding: 6px 8px; display: flex; flex-direction: column; justify-content: center; gap: 2px; background: rgba(19,24,56,.5); position: sticky; left: 0; z-index: 4; border-right: 1px solid rgba(255,255,255,.06); }
+    .edit-track-header .tname { font-size: 10px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .edit-track-header .thead-btns { display: flex; gap: 6px; align-items: center; }
+    .edit-track-header .thead-btns i { font-size: 11px; color: #71717a; cursor: pointer; }
+    .edit-track-header .thead-btns i:hover { color: #e4e4e7; }
+    .edit-track-header .thead-btns i.muted { color: #f87171; }
+    .edit-track-header input[type="range"] { width: 100%; height: 3px; }
+    .edit-track-lane { position: relative; flex: 1; }
+    .edit-region { position: absolute; top: 6px; height: 44px; background: linear-gradient(135deg,#7c5cff,#5b3fd6); border-radius: 6px; cursor: grab; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.15); }
+    .edit-region.dragging { cursor: grabbing; opacity: .8; z-index: 10; }
+    .edit-region .region-label { position: absolute; top: 2px; left: 6px; font-size: 9px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 12px); pointer-events: none; }
+    .edit-region .rhandle { position: absolute; top: 0; width: 8px; height: 100%; cursor: ew-resize; background: rgba(255,255,255,.15); }
+    .edit-region .rhandle.left { left: 0; border-radius: 6px 0 0 6px; }
+    .edit-region .rhandle.right { right: 0; border-radius: 0 6px 6px 0; }
+    .edit-playhead { position: absolute; top: 22px; bottom: 0; width: 2px; background: #fbbf24; z-index: 6; pointer-events: none; }
+
     /* ===== HAMBURGER (hidden by default on desktop) ===== */
     .menu-toggle { display: none; position: fixed; top: 12px; left: 12px; z-index: 60; width: 38px; height: 38px; border-radius: 10px; background: rgba(19,24,56,.9); border: 1px solid rgba(255,255,255,.1); color: #e4e4e7; font-size: 16px; align-items: center; justify-content: center; }
     .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 40; }
@@ -132,6 +154,7 @@
     <div class="nav-item active" data-tab="dashboard"><i class="fa-solid fa-table-cells"></i> Dashboard</div>
     <div class="nav-item" data-tab="crop"><i class="fa-solid fa-scissors"></i> Potong</div>
     <div class="nav-item" data-tab="concat"><i class="fa-solid fa-link"></i> Timeline / Sambung</div>
+    <div class="nav-item" data-tab="edit"><i class="fa-solid fa-layer-group"></i> Edit (Multi-Track)</div>
     <div class="nav-item premium" data-tab="denoise"><i class="fa-solid fa-ear-deaf"></i> Denoise AI <span class="badge">PRO</span></div>
     <div class="nav-item premium" data-tab="normalize"><i class="fa-solid fa-volume-high"></i> Normalisasi <span class="badge">PRO</span></div>
     <div class="nav-item premium" data-tab="effects"><i class="fa-solid fa-sliders"></i> Efek Audio <span class="badge">PRO</span></div>
@@ -186,6 +209,32 @@
         </div>
       </div>
       <div id="timelineList" class="space-y-2"></div>
+    </div>
+
+    <!-- =============== TAB: EDIT (MULTI-TRACK) =============== -->
+    <div class="tab-content hidden" id="tab-edit">
+      <div class="panel" style="margin-bottom:8px">
+        <h3 class="text-sm font-bold mb-1"><i class="fa-solid fa-layer-group text-indigo-400"></i> Edit Multi-Track</h3>
+        <p class="text-xs text-zinc-500 mb-3">Tiap lagu jadi track sendiri. Geser region ke posisi manapun, tarik ujungnya untuk potong, tumpuk beberapa track buat transisi/layer.</p>
+        <div class="flex items-center gap-2 flex-wrap">
+          <select id="addTrackSelect" class="btn-ghost text-xs" style="background:#18182e"></select>
+          <button class="btn-ghost text-xs" id="addTrackBtn"><i class="fa-solid fa-plus"></i> Tambah Track</button>
+          <button class="btn-ghost text-xs" id="editPlayBtn"><i class="fa-solid fa-circle-play"></i> Play Mix</button>
+          <button class="btn-ghost text-xs" id="editStopBtn"><i class="fa-solid fa-stop"></i> Stop</button>
+          <span class="text-[10px] text-zinc-500">Zoom</span>
+          <input type="range" id="editZoomSlider" min="15" max="120" value="40" style="width:80px">
+          <div style="flex:1"></div>
+          <button class="btn-primary" id="mixdownBtn"><i class="fa-solid fa-file-export"></i> Mixdown & Ekspor</button>
+          <button class="btn-ghost text-xs" id="playMixdownBtn" disabled><i class="fa-solid fa-circle-play play-icon" data-key="mixdown"></i> Play Hasil</button>
+          <button class="btn-ghost text-xs" id="downloadMixdownBtn" disabled><i class="fa-solid fa-download"></i> Download</button>
+        </div>
+        <p class="text-[10px] text-zinc-500 mt-2" id="editStatus">Belum ada track</p>
+      </div>
+      <div class="edit-timeline-wrap" id="editTimelineWrap">
+        <div class="edit-ruler" id="editRuler"></div>
+        <div class="edit-tracks" id="editTracks"></div>
+        <div class="edit-playhead" id="editPlayhead" style="display:none"></div>
+      </div>
     </div>
 
     <!-- =============== TAB: DENOISE =============== -->
@@ -461,6 +510,7 @@
         const id = ++fileCounter;
         files.push({
           id, file, name: file.name, blob: null, duration, waveformData, start: 0, end: duration,
+          audioBuffer,
           includeInTimeline: true,
           tlDenoise: { enabled: false, strength: 20 },
           tlNormalize: { enabled: false, target: -14 }
@@ -758,6 +808,7 @@
         const target = document.getElementById(`tab-${tab}`);
         if (target) target.classList.remove('hidden');
         if (tab === 'crop' || tab === 'dashboard') renderAll();
+        if (tab === 'edit') renderEditTimeline();
         closeSidebar(); // tutup drawer setelah pilih menu (mobile/tablet)
       });
     });
@@ -961,6 +1012,307 @@
       a.click();
       document.body.removeChild(a);
       log('success', `⬇️ Download dimulai: ${lastMergedName}`);
+    });
+
+    // ============================================================
+    // EDIT MULTI-TRACK (mirip GarageBand: track sejajar, region bebas geser)
+    // ============================================================
+    let tracks = []; // { id, fileId, name, offset, regionStart, regionEnd, duration, volume, muted }
+    let trackCounter = 0;
+    let editPxPerSec = 40;
+    let lastMixdownUrl = null, lastMixdownName = null;
+    let mixSources = []; // AudioBufferSourceNode aktif saat preview
+    let mixStartCtxTime = 0;
+    let mixPreviewRAF = null;
+    let sharedCtx = null;
+
+    function getSharedCtx() {
+      if (!sharedCtx) sharedCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return sharedCtx;
+    }
+
+    function refreshAddTrackSelect() {
+      const sel = $('addTrackSelect');
+      sel.innerHTML = files.map(f => `<option value="${f.id}">${f.name}</option>`).join('') || '<option value="">Belum ada file</option>';
+    }
+
+    function addTrack(fileId) {
+      const f = files.find(x => x.id === fileId);
+      if (!f) return;
+      // cari posisi offset default: taruh setelah track terakhir yang sudah ada biar tidak numpuk total
+      const lastEnd = tracks.reduce((max, t) => Math.max(max, t.offset + (t.regionEnd - t.regionStart)), 0);
+      tracks.push({
+        id: ++trackCounter, fileId, name: f.name,
+        offset: tracks.length === 0 ? 0 : lastEnd,
+        regionStart: 0, regionEnd: f.duration, duration: f.duration,
+        volume: 1, muted: false
+      });
+      renderEditTimeline();
+      $('editStatus').textContent = `${tracks.length} track`;
+    }
+
+    $('addTrackBtn').addEventListener('click', () => {
+      const id = parseInt($('addTrackSelect').value);
+      if (!id) { log('error', 'Upload file dulu di Dashboard.'); return; }
+      addTrack(id);
+      log('info', `➕ Track ditambahkan: ${files.find(f => f.id === id)?.name}`);
+    });
+
+    $('editZoomSlider').addEventListener('input', () => {
+      editPxPerSec = parseInt($('editZoomSlider').value);
+      renderEditTimeline();
+    });
+
+    function timelineTotalDuration() {
+      return tracks.reduce((max, t) => Math.max(max, t.offset + (t.regionEnd - t.regionStart)), 0);
+    }
+
+    function renderRuler() {
+      const total = Math.max(timelineTotalDuration() + 10, 30);
+      const ruler = $('editRuler');
+      ruler.style.width = (total * editPxPerSec) + 'px';
+      let html = '';
+      for (let s = 0; s <= total; s += 5) {
+        html += `<span style="left:${s * editPxPerSec}px">${s}s</span>`;
+      }
+      ruler.innerHTML = html;
+    }
+
+    function renderEditTimeline() {
+      refreshAddTrackSelect();
+      renderRuler();
+      const container = $('editTracks');
+      if (!tracks.length) {
+        container.innerHTML = '<div class="text-center text-zinc-500 text-sm py-10">Belum ada track. Pilih file & klik "Tambah Track".</div>';
+        return;
+      }
+      const total = Math.max(timelineTotalDuration() + 10, 30);
+      let html = '';
+      tracks.forEach(t => {
+        const left = t.offset * editPxPerSec;
+        const width = Math.max((t.regionEnd - t.regionStart) * editPxPerSec, 20);
+        html += `
+          <div class="edit-track-row" data-track-id="${t.id}">
+            <div class="edit-track-header">
+              <div class="tname">${t.name}</div>
+              <div class="thead-btns">
+                <i class="fa-solid fa-volume-${t.muted ? 'xmark muted' : 'high'} tmute" data-id="${t.id}" title="Mute"></i>
+                <input type="range" class="tvol" data-id="${t.id}" min="0" max="1.5" step="0.05" value="${t.volume}">
+                <i class="fa-solid fa-copy tdup" data-id="${t.id}" title="Duplikat (untuk transisi/layer)"></i>
+                <i class="fa-solid fa-trash tdel" data-id="${t.id}" title="Hapus track"></i>
+              </div>
+            </div>
+            <div class="edit-track-lane" style="width:${total * editPxPerSec}px">
+              <div class="edit-region" data-id="${t.id}" style="left:${left}px;width:${width}px">
+                <div class="rhandle left" data-id="${t.id}"></div>
+                <span class="region-label">${t.name} (${(t.regionEnd - t.regionStart).toFixed(1)}s)</span>
+                <div class="rhandle right" data-id="${t.id}"></div>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+      wireTrackEvents(container);
+    }
+
+    function wireTrackEvents(container) {
+      container.querySelectorAll('.tmute').forEach(el => el.addEventListener('click', () => {
+        const t = tracks.find(x => x.id === parseInt(el.dataset.id)); if (t) { t.muted = !t.muted; renderEditTimeline(); }
+      }));
+      container.querySelectorAll('.tvol').forEach(el => el.addEventListener('input', () => {
+        const t = tracks.find(x => x.id === parseInt(el.dataset.id)); if (t) t.volume = parseFloat(el.value);
+      }));
+      container.querySelectorAll('.tdup').forEach(el => el.addEventListener('click', () => {
+        const t = tracks.find(x => x.id === parseInt(el.dataset.id));
+        if (!t) return;
+        tracks.push({ ...t, id: ++trackCounter, offset: t.offset + (t.regionEnd - t.regionStart) + 1 });
+        renderEditTimeline();
+        log('info', `📄 Track "${t.name}" diduplikat untuk transisi/layer.`);
+      }));
+      container.querySelectorAll('.tdel').forEach(el => el.addEventListener('click', () => {
+        tracks = tracks.filter(x => x.id !== parseInt(el.dataset.id));
+        renderEditTimeline();
+        $('editStatus').textContent = `${tracks.length} track`;
+      }));
+
+      // Drag region (geser posisi bebas)
+      container.querySelectorAll('.edit-region').forEach(regionEl => {
+        regionEl.addEventListener('mousedown', (e) => {
+          if (e.target.classList.contains('rhandle')) return; // biar resize handle yg nangkep
+          const id = parseInt(regionEl.dataset.id);
+          const t = tracks.find(x => x.id === id);
+          if (!t) return;
+          const startX = e.clientX;
+          const startOffset = t.offset;
+          regionEl.classList.add('dragging');
+          function onMove(ev) {
+            const dx = (ev.clientX - startX) / editPxPerSec;
+            t.offset = Math.max(0, startOffset + dx);
+            regionEl.style.left = (t.offset * editPxPerSec) + 'px';
+          }
+          function onUp() {
+            regionEl.classList.remove('dragging');
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onUp);
+            renderEditTimeline();
+          }
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        });
+      });
+
+      // Resize handle kiri: trim regionStart, offset ikut geser (out-point tetap)
+      container.querySelectorAll('.rhandle.left').forEach(handle => {
+        handle.addEventListener('mousedown', (e) => {
+          e.stopPropagation();
+          const id = parseInt(handle.dataset.id);
+          const t = tracks.find(x => x.id === id);
+          if (!t) return;
+          const startX = e.clientX;
+          const origStart = t.regionStart, origOffset = t.offset;
+          function onMove(ev) {
+            const ds = (ev.clientX - startX) / editPxPerSec;
+            let newStart = Math.min(Math.max(origStart + ds, 0), t.regionEnd - 0.3);
+            t.offset = Math.max(0, origOffset + (newStart - origStart));
+            t.regionStart = newStart;
+            renderEditTimeline();
+          }
+          function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        });
+      });
+
+      // Resize handle kanan: trim regionEnd saja
+      container.querySelectorAll('.rhandle.right').forEach(handle => {
+        handle.addEventListener('mousedown', (e) => {
+          e.stopPropagation();
+          const id = parseInt(handle.dataset.id);
+          const t = tracks.find(x => x.id === id);
+          if (!t) return;
+          const startX = e.clientX;
+          const origEnd = t.regionEnd;
+          function onMove(ev) {
+            const ds = (ev.clientX - startX) / editPxPerSec;
+            t.regionEnd = Math.min(Math.max(origEnd + ds, t.regionStart + 0.3), t.duration);
+            renderEditTimeline();
+          }
+          function onUp() { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); }
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+        });
+      });
+    }
+
+    // ---------- PREVIEW MIX (Web Audio, real-time) ----------
+    $('editPlayBtn').addEventListener('click', () => {
+      if (!tracks.length) { log('error', 'Belum ada track.'); return; }
+      stopMixPreview();
+      const ctx = getSharedCtx();
+      mixStartCtxTime = ctx.currentTime + 0.1;
+      tracks.forEach(t => {
+        if (t.muted) return;
+        const f = files.find(x => x.id === t.fileId);
+        if (!f || !f.audioBuffer) return;
+        const src = ctx.createBufferSource();
+        src.buffer = f.audioBuffer;
+        const gain = ctx.createGain();
+        gain.gain.value = t.volume;
+        src.connect(gain).connect(ctx.destination);
+        const dur = t.regionEnd - t.regionStart;
+        src.start(mixStartCtxTime + t.offset, t.regionStart, dur);
+        mixSources.push(src);
+      });
+      $('editPlayhead').style.display = 'block';
+      const wrap = $('editTimelineWrap');
+      function animatePlayhead() {
+        const elapsed = ctx.currentTime - mixStartCtxTime;
+        const px = elapsed * editPxPerSec + 150;
+        $('editPlayhead').style.left = px + 'px';
+        if (elapsed < timelineTotalDuration() + 1) {
+          mixPreviewRAF = requestAnimationFrame(animatePlayhead);
+        } else {
+          stopMixPreview();
+        }
+      }
+      animatePlayhead();
+      log('info', '▶️ Memutar preview mix multi-track...');
+    });
+
+    function stopMixPreview() {
+      mixSources.forEach(s => { try { s.stop(); } catch (e) {} });
+      mixSources = [];
+      if (mixPreviewRAF) cancelAnimationFrame(mixPreviewRAF);
+      $('editPlayhead').style.display = 'none';
+    }
+    $('editStopBtn').addEventListener('click', stopMixPreview);
+
+    // ---------- MIXDOWN & EKSPOR (ffmpeg filter_complex: atrim+adelay+amix) ----------
+    $('mixdownBtn').addEventListener('click', async () => {
+      if (!loaded) { log('error', 'FFmpeg belum siap.'); return; }
+      if (!tracks.length) { log('error', 'Belum ada track untuk di-mixdown.'); return; }
+      const active = tracks.filter(t => !t.muted);
+      if (!active.length) { log('error', 'Semua track di-mute.'); return; }
+      $('mixdownBtn').disabled = true;
+      $('editStatus').textContent = 'Mixdown berjalan...';
+      log('process', `🎚️ Mixdown ${active.length} track...`);
+      updateProgress('Mixdown...');
+      try {
+        const inputArgs = [];
+        const filterParts = [];
+        for (let i = 0; i < active.length; i++) {
+          const t = active[i];
+          const f = files.find(x => x.id === t.fileId);
+          const ext = f.name.split('.').pop() || 'mp3';
+          const inName = `mt_${i}.${ext}`;
+          const data = new Uint8Array(await f.file.arrayBuffer());
+          await ffmpeg.writeFile(inName, data);
+          inputArgs.push('-i', inName);
+          const delayMs = Math.round(t.offset * 1000);
+          filterParts.push(`[${i}:a]atrim=start=${t.regionStart}:end=${t.regionEnd},asetpts=PTS-STARTPTS,volume=${t.volume},adelay=${delayMs}|${delayMs}[a${i}]`);
+          log('info', `[${i + 1}/${active.length}] ${t.name} — mulai ${t.offset.toFixed(1)}s, durasi ${(t.regionEnd - t.regionStart).toFixed(1)}s, vol ${t.volume}x`);
+        }
+        const mixInputs = active.map((_, i) => `[a${i}]`).join('');
+        const filterGraph = filterParts.join(';') + `;${mixInputs}amix=inputs=${active.length}:duration=longest:dropout_transition=3[mix]`;
+        const outName = 'mixdown.mp3';
+        await ffmpeg.exec([...inputArgs, '-filter_complex', filterGraph, '-map', '[mix]', outName]);
+        const outData = await ffmpeg.readFile(outName);
+        if (!outData || outData.byteLength === 0) throw new Error('Hasil mixdown kosong');
+        const blob = new Blob([outData.buffer], { type: 'audio/mpeg' });
+        if (lastMixdownUrl) URL.revokeObjectURL(lastMixdownUrl);
+        lastMixdownUrl = URL.createObjectURL(blob);
+        lastMixdownName = `mixdown_${Date.now()}.mp3`;
+        const newFile = new File([blob], lastMixdownName, { type: 'audio/mpeg' });
+        await processFile(newFile);
+        for (let i = 0; i < active.length; i++) await ffmpeg.deleteFile(`mt_${i}.${active[i].name.split('.').pop() || 'mp3'}`).catch(() => {});
+        await ffmpeg.deleteFile(outName).catch(() => {});
+        log('success', `✅ Mixdown selesai: ${lastMixdownName}`);
+        $('editStatus').textContent = 'Mixdown selesai, siap didengarkan/didownload.';
+        $('playMixdownBtn').disabled = false;
+        $('downloadMixdownBtn').disabled = false;
+        renderAll();
+      } catch (e) {
+        log('error', `❌ Mixdown gagal: ${e.message}`);
+        $('editStatus').textContent = 'Gagal, cek log.';
+      }
+      $('mixdownBtn').disabled = false;
+      updateProgress('Siap');
+    });
+
+    $('playMixdownBtn').addEventListener('click', () => {
+      if (!lastMixdownUrl) return;
+      togglePreview('mixdown', lastMixdownUrl, 0, null);
+    });
+    $('downloadMixdownBtn').addEventListener('click', () => {
+      if (!lastMixdownUrl) return;
+      const a = document.createElement('a');
+      a.href = lastMixdownUrl;
+      a.download = lastMixdownName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      log('success', `⬇️ Download dimulai: ${lastMixdownName}`);
     });
 
     // ============================================================
