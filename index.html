@@ -52,12 +52,46 @@
     .badge-pro { font-size: 9px; background: rgba(251,191,36,.15); color: #fbbf24; padding: 2px 8px; border-radius: 20px; border: 1px solid rgba(251,191,36,.2); }
     .hidden { display: none !important; }
     .upgrade-banner { background: linear-gradient(135deg, rgba(251,191,36,.1), rgba(245,158,11,.05)); border: 1px solid rgba(251,191,36,.2); border-radius: 10px; padding: 14px; text-align: center; margin-top: auto; }
+
+    .file-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .file-actions .btn-ghost { font-size: 11px; padding: 4px 10px; }
+
+    /* ===== HAMBURGER (hidden by default on desktop) ===== */
+    .menu-toggle { display: none; position: fixed; top: 12px; left: 12px; z-index: 60; width: 38px; height: 38px; border-radius: 10px; background: rgba(19,24,56,.9); border: 1px solid rgba(255,255,255,.1); color: #e4e4e7; font-size: 16px; align-items: center; justify-content: center; }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 40; }
+    .sidebar-overlay.show { display: block; }
+
+    /* ===== TABLET (<=1024px): sidebar jadi drawer, main-area full width ===== */
+    @media (max-width: 1024px) {
+      .menu-toggle { display: flex; }
+      .sidebar { position: fixed; top: 0; left: 0; height: 100%; z-index: 50; width: 250px; transform: translateX(-100%); transition: transform .25s ease; box-shadow: 8px 0 24px rgba(0,0,0,.4); }
+      .sidebar.open { transform: translateX(0); }
+      .main-area { padding: 20px 16px 16px; padding-top: 60px; width: 100%; }
+    }
+
+    /* ===== MOBILE (<=640px): perkecil padding, tumpuk kontrol ===== */
+    @media (max-width: 640px) {
+      body { height: 100dvh; }
+      .main-area { padding: 16px 10px; padding-top: 56px; }
+      .panel { padding: 14px; border-radius: 12px; }
+      .upload-zone { padding: 16px; }
+      .btn-primary, .btn-ghost { font-size: 12px; padding: 8px 12px; }
+      .slider-group { flex-direction: column; align-items: stretch; }
+      .slider-group input[type="range"] { width: 100%; }
+      .file-card .flex.items-center.gap-4 { flex-wrap: wrap; gap: 8px !important; }
+      #tab-effects .grid { grid-template-columns: 1fr 1fr; }
+      .waveform-container { height: 48px; }
+    }
   </style>
 </head>
 <body>
 
+  <!-- HAMBURGER (mobile/tablet) -->
+  <button id="menuToggle" class="menu-toggle"><i class="fa-solid fa-bars"></i></button>
+  <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
   <!-- SIDEBAR -->
-  <div class="sidebar">
+  <div class="sidebar" id="sidebar">
     <div class="logo">🎧 <span>Studio</span>Pro</div>
     <div class="nav-item active" data-tab="dashboard"><i class="fa-solid fa-table-cells"></i> Dashboard</div>
     <div class="nav-item" data-tab="crop"><i class="fa-solid fa-scissors"></i> Potong</div>
@@ -80,7 +114,7 @@
     <!-- =============== TAB: DASHBOARD =============== -->
     <div class="tab-content" id="tab-dashboard">
       <div class="upload-zone mb-4" id="uploadZone">
-        <input type="file" id="audioInput" accept="audio/*" multiple class="hidden">
+        <input type="file" id="audioInput" accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg,.wma,.aiff,audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/aac,audio/flac,audio/ogg" multiple class="hidden">
         <div>
           <i class="fa-solid fa-cloud-arrow-up text-3xl text-zinc-600"></i>
           <p class="text-sm font-medium mt-2">Tarik & lepas, atau klik untuk upload (bisa banyak)</p>
@@ -269,8 +303,10 @@
 
     async function handleFiles(fileListObj) {
       const arr = Array.from(fileListObj);
+      const audioExt = /\.(mp3|wav|m4a|aac|flac|ogg|wma|aiff|opus)$/i;
       for (const file of arr) {
-        if (!file.type.startsWith('audio/')) { log('error', `${file.name} bukan audio.`); continue; }
+        const looksAudio = file.type.startsWith('audio/') || audioExt.test(file.name);
+        if (!looksAudio) { log('error', `${file.name} bukan audio.`); continue; }
         await processFile(file);
       }
       renderAll();
@@ -331,6 +367,10 @@
             </div>
             <div class="waveform-container" onclick="selectFile(${f.id})">
               <canvas class="waveform" data-id="${f.id}"></canvas>
+            </div>
+            <div class="file-actions">
+              <button class="btn-ghost" onclick="selectFile(${f.id})"><i class="fa-solid fa-check"></i> Pilih</button>
+              <button class="btn-ghost" onclick="downloadFile(${f.id})"><i class="fa-solid fa-download"></i> Download</button>
             </div>
           </div>
         `;
@@ -427,6 +467,20 @@
       // We'll just rely on re-render for simplicity.
     }
 
+    window.downloadFile = function(id) {
+      const f = files.find(x => x.id === id);
+      if (!f) return;
+      const url = URL.createObjectURL(f.file);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = f.name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      log('success', `⬇️ Download dimulai: ${f.name}`);
+    };
+
     window.selectFile = function(id) {
       selectedFileId = id;
       renderAll();
@@ -440,6 +494,20 @@
     // ============================================================
     // NAVIGATION
     // ============================================================
+    const sidebarEl = $('sidebar');
+    const menuToggle = $('menuToggle');
+    const sidebarOverlay = $('sidebarOverlay');
+
+    function closeSidebar() {
+      sidebarEl.classList.remove('open');
+      sidebarOverlay.classList.remove('show');
+    }
+    menuToggle.addEventListener('click', () => {
+      sidebarEl.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    });
+    sidebarOverlay.addEventListener('click', closeSidebar);
+
     document.querySelectorAll('.nav-item').forEach(item => {
       item.addEventListener('click', () => {
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -449,6 +517,7 @@
         const target = document.getElementById(`tab-${tab}`);
         if (target) target.classList.remove('hidden');
         if (tab === 'crop' || tab === 'dashboard') renderAll();
+        closeSidebar(); // tutup drawer setelah pilih menu (mobile/tablet)
       });
     });
 
