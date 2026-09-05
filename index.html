@@ -180,6 +180,7 @@
         <p class="text-xs text-zinc-500 mb-3">Seret (drag) kartu lagu untuk atur urutan. Centang efek per-lagu kalau perlu, lalu gabung jadi 1 file.</p>
         <div class="flex items-center gap-3 flex-wrap">
           <button class="btn-primary" id="exportTimelineBtn"><i class="fa-solid fa-file-export"></i> Gabungkan & Ekspor 1 File</button>
+          <button class="btn-ghost text-xs" id="playMergedBtn" disabled onclick="playMergedPreview()"><i class="fa-solid fa-circle-play play-icon" data-key="merged"></i> Play Hasil</button>
           <button class="btn-ghost text-xs" id="downloadMergedBtn" disabled><i class="fa-solid fa-download"></i> Download Hasil</button>
           <span class="text-xs text-zinc-500" id="timelineStatus">Seret untuk atur urutan</span>
         </div>
@@ -287,6 +288,8 @@
   </div>
   </div><!-- /app-shell -->
 
+  <audio id="previewAudio" style="display:none"></audio>
+
   <script>
     // ============================================================
     // SETUP FFMPEG & STATE
@@ -320,6 +323,64 @@
     const editorEnableFlex = $('editorEnableFlex');
     const editorApplyBtn = $('editorApplyBtn');
     const SCALE_STEPS = [0, 2, 4, 5, 7, 9, 11]; // interval tangga nada mayor dalam 1 oktaf
+
+    // ============================================================
+    // PREVIEW PLAYBACK (global, dipakai di Dashboard & Timeline)
+    // ============================================================
+    const previewAudio = $('previewAudio');
+    let currentPreviewId = null; // 'file-<id>' atau 'merged'
+    let previewBoundary = null; // { end }
+    let previewUrls = {}; // cache objectURL per file id, direvoke saat file dihapus
+
+    function getPreviewUrl(f) {
+      if (!previewUrls[f.id]) previewUrls[f.id] = URL.createObjectURL(f.file);
+      return previewUrls[f.id];
+    }
+
+    previewAudio.addEventListener('timeupdate', () => {
+      if (previewBoundary && previewAudio.currentTime >= previewBoundary.end) {
+        previewAudio.pause();
+        previewAudio.currentTime = previewBoundary.start || 0;
+        setPlayIcons(null);
+        currentPreviewId = null;
+      }
+    });
+    previewAudio.addEventListener('ended', () => { setPlayIcons(null); currentPreviewId = null; });
+
+    function setPlayIcons(activeKey) {
+      document.querySelectorAll('.play-icon').forEach(el => {
+        const key = el.dataset.key;
+        el.classList.toggle('fa-circle-play', key !== activeKey);
+        el.classList.toggle('fa-circle-pause', key === activeKey);
+      });
+    }
+
+    window.togglePreview = function(key, url, start, end) {
+      if (currentPreviewId === key && !previewAudio.paused) {
+        previewAudio.pause();
+        setPlayIcons(null);
+        currentPreviewId = null;
+        return;
+      }
+      previewAudio.src = url;
+      previewAudio.currentTime = start || 0;
+      previewBoundary = (end !== undefined && end !== null) ? { start: start || 0, end } : null;
+      previewAudio.play().catch(e => log('error', `Tidak bisa memutar: ${e.message}`));
+      currentPreviewId = key;
+      setPlayIcons(key);
+      log('info', `▶️ Memutar preview...`);
+    };
+
+    window.playFilePreview = function(id) {
+      const f = files.find(x => x.id === id);
+      if (!f) return;
+      togglePreview(`file-${id}`, getPreviewUrl(f), f.start, f.end);
+    };
+
+    window.playMergedPreview = function() {
+      if (!lastMergedUrl) return;
+      togglePreview('merged', lastMergedUrl, 0, null);
+    };
 
     // ============================================================
     // LOGGING
@@ -452,6 +513,7 @@
               <canvas class="waveform" data-id="${f.id}"></canvas>
             </div>
             <div class="file-actions">
+              <button class="btn-ghost" onclick="playFilePreview(${f.id})"><i class="fa-solid fa-circle-play play-icon" data-key="file-${f.id}"></i> Play</button>
               <button class="btn-ghost" onclick="selectFile(${f.id})"><i class="fa-solid fa-check"></i> Pilih</button>
               <button class="btn-ghost" onclick="downloadFile(${f.id})"><i class="fa-solid fa-download"></i> Download</button>
             </div>
@@ -749,9 +811,10 @@
           <div class="track-card" draggable="true" data-id="${f.id}">
             <i class="fa-solid fa-grip-vertical drag-handle"></i>
             <div class="track-num">${idx + 1}</div>
+            <button class="btn-ghost" style="padding:4px 8px" onclick="playFilePreview(${f.id})"><i class="fa-solid fa-circle-play play-icon" data-key="file-${f.id}"></i></button>
             <div class="track-main">
               <div class="track-name">${f.name}</div>
-              <div class="track-meta">${f.duration.toFixed(1)}s</div>
+              <div class="track-meta">${(f.end - f.start).toFixed(1)}s${(f.start > 0 || f.end < f.duration) ? ` (dipotong dari ${f.duration.toFixed(1)}s)` : ''}</div>
             </div>
             <div class="track-fx-row">
               <label><input type="checkbox" class="tl-include" data-id="${f.id}" ${f.includeInTimeline ? 'checked' : ''}> Ikutkan</label>
@@ -806,6 +869,7 @@
       }));
       container.querySelectorAll('.track-remove').forEach(btn => btn.addEventListener('click', () => {
         const id = parseInt(btn.dataset.id);
+        if (previewUrls[id]) { URL.revokeObjectURL(previewUrls[id]); delete previewUrls[id]; }
         files = files.filter(x => x.id !== id);
         if (selectedFileId === id) { selectedFileId = null; updateEditorPanel(); }
         renderAll(); updateFileInfo();
@@ -841,13 +905,16 @@
           }
           if (f.tlNormalize.enabled) filters.push(`loudnorm=I=${f.tlNormalize.target}:TP=-1:LRA=11`);
 
-          log('info', `[${i + 1}/${active.length}] ${f.name}${filters.length ? ' — efek: ' + filters.join(' | ') : ' — tanpa efek'}`);
+          const isCropped = (f.start > 0 || f.end < f.duration);
+          const cropArgs = isCropped ? ['-ss', f.start.toString(), '-to', f.end.toString()] : [];
 
-          if (filters.length) {
-            await ffmpeg.exec(['-i', inName, '-af', filters.join(','), outName]);
-          } else {
-            await ffmpeg.exec(['-i', inName, '-c', 'copy', outName]);
-          }
+          log('info', `[${i + 1}/${active.length}] ${f.name}${isCropped ? ` — potong ${f.start.toFixed(1)}s-${f.end.toFixed(1)}s` : ''}${filters.length ? ' — efek: ' + filters.join(' | ') : ''}`);
+
+          const execArgs = ['-i', inName, ...cropArgs];
+          if (filters.length) execArgs.push('-af', filters.join(','));
+          else execArgs.push('-c', 'copy');
+          execArgs.push(outName);
+          await ffmpeg.exec(execArgs);
           processedNames.push(outName);
           await ffmpeg.deleteFile(inName).catch(() => {});
         }
@@ -873,8 +940,9 @@
         await ffmpeg.deleteFile(mergedName).catch(() => {});
 
         log('success', `✅ Timeline berhasil diekspor jadi 1 file: ${lastMergedName}`);
-        $('timelineStatus').textContent = 'Selesai! Siap didownload.';
+        $('timelineStatus').textContent = 'Selesai! Siap didengarkan/didownload.';
         $('downloadMergedBtn').disabled = false;
+        $('playMergedBtn').disabled = false;
         renderAll(); updateFileInfo();
       } catch (e) {
         log('error', `❌ Ekspor timeline gagal: ${e.message}`);
