@@ -70,6 +70,22 @@
     .editor-checkbox-row { display: flex; align-items: center; gap: 20px; margin-top: 6px; flex-wrap: wrap; }
     .editor-checkbox-row label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #a1a1aa; cursor: pointer; }
 
+    /* ===== TIMELINE (drag & drop) ===== */
+    .track-card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; cursor: grab; transition: opacity .15s, border-color .15s; }
+    .track-card.dragging { opacity: .35; }
+    .track-card.drag-over { border-color: rgba(124,92,255,.6); }
+    .track-card .drag-handle { color: #52525b; font-size: 14px; flex-shrink: 0; }
+    .track-card .track-num { width: 22px; height: 22px; border-radius: 50%; background: rgba(124,92,255,.15); color: #c9b8ff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .track-card .track-main { flex: 1; min-width: 0; }
+    .track-card .track-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-card .track-meta { font-size: 10px; color: #71717a; }
+    .track-fx-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex-shrink: 0; }
+    .track-fx-row label { display: flex; align-items: center; gap: 4px; font-size: 10px; color: #a1a1aa; cursor: pointer; white-space: nowrap; }
+    .track-fx-row input[type="range"] { width: 60px; -webkit-appearance: none; height: 3px; background: #27272a; border-radius: 2px; outline: none; }
+    .track-fx-row input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; background: #7c5cff; border-radius: 50%; cursor: pointer; }
+    .track-remove { color: #71717a; cursor: pointer; flex-shrink: 0; padding: 4px; }
+    .track-remove:hover { color: #f87171; }
+
     /* ===== HAMBURGER (hidden by default on desktop) ===== */
     .menu-toggle { display: none; position: fixed; top: 12px; left: 12px; z-index: 60; width: 38px; height: 38px; border-radius: 10px; background: rgba(19,24,56,.9); border: 1px solid rgba(255,255,255,.1); color: #e4e4e7; font-size: 16px; align-items: center; justify-content: center; }
     .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 40; }
@@ -97,6 +113,8 @@
       .waveform-container { height: 48px; }
       .editor-panel { padding: 10px 12px; max-height: 220px; }
       .pitch-slider-row input[type="range"] { max-width: none; width: 100%; }
+      .track-card { flex-wrap: wrap; }
+      .track-fx-row { width: 100%; padding-left: 34px; margin-top: 4px; }
     }
   </style>
 </head>
@@ -113,7 +131,7 @@
     <div class="logo">🎧 <span>Studio</span>Pro</div>
     <div class="nav-item active" data-tab="dashboard"><i class="fa-solid fa-table-cells"></i> Dashboard</div>
     <div class="nav-item" data-tab="crop"><i class="fa-solid fa-scissors"></i> Potong</div>
-    <div class="nav-item" data-tab="concat"><i class="fa-solid fa-link"></i> Sambung</div>
+    <div class="nav-item" data-tab="concat"><i class="fa-solid fa-link"></i> Timeline / Sambung</div>
     <div class="nav-item premium" data-tab="denoise"><i class="fa-solid fa-ear-deaf"></i> Denoise AI <span class="badge">PRO</span></div>
     <div class="nav-item premium" data-tab="normalize"><i class="fa-solid fa-volume-high"></i> Normalisasi <span class="badge">PRO</span></div>
     <div class="nav-item premium" data-tab="effects"><i class="fa-solid fa-sliders"></i> Efek Audio <span class="badge">PRO</span></div>
@@ -155,14 +173,18 @@
       <div id="cropFileList" class="space-y-2"></div>
     </div>
 
-    <!-- =============== TAB: SAMBUNG =============== -->
+    <!-- =============== TAB: SAMBUNG / TIMELINE =============== -->
     <div class="tab-content hidden" id="tab-concat">
       <div class="panel">
-        <h3 class="text-sm font-bold mb-2"><i class="fa-solid fa-link text-indigo-400"></i> Sambung Semua File</h3>
-        <p class="text-xs text-zinc-500 mb-3">Gabungkan semua file yang terupload menjadi satu file (urut sesuai daftar).</p>
-        <button class="btn-primary" id="concatBtn"><i class="fa-solid fa-arrow-right-arrow-left"></i> Gabung Semua</button>
-        <span class="text-xs text-zinc-500 ml-3" id="concatStatus">Siap</span>
+        <h3 class="text-sm font-bold mb-2"><i class="fa-solid fa-link text-indigo-400"></i> Timeline Editor</h3>
+        <p class="text-xs text-zinc-500 mb-3">Seret (drag) kartu lagu untuk atur urutan. Centang efek per-lagu kalau perlu, lalu gabung jadi 1 file.</p>
+        <div class="flex items-center gap-3 flex-wrap">
+          <button class="btn-primary" id="exportTimelineBtn"><i class="fa-solid fa-file-export"></i> Gabungkan & Ekspor 1 File</button>
+          <button class="btn-ghost text-xs" id="downloadMergedBtn" disabled><i class="fa-solid fa-download"></i> Download Hasil</button>
+          <span class="text-xs text-zinc-500" id="timelineStatus">Seret untuk atur urutan</span>
+        </div>
       </div>
+      <div id="timelineList" class="space-y-2"></div>
     </div>
 
     <!-- =============== TAB: DENOISE =============== -->
@@ -376,7 +398,12 @@
         const duration = audioBuffer.duration;
         const waveformData = getWaveformData(audioBuffer, 600);
         const id = ++fileCounter;
-        files.push({ id, file, name: file.name, blob: null, duration, waveformData, start: 0, end: duration });
+        files.push({
+          id, file, name: file.name, blob: null, duration, waveformData, start: 0, end: duration,
+          includeInTimeline: true,
+          tlDenoise: { enabled: false, strength: 20 },
+          tlNormalize: { enabled: false, target: -14 }
+        });
         log('info', `✅ ${file.name} (${duration.toFixed(1)}s)`);
       } catch (e) {
         log('error', `Gagal decode ${file.name}: ${e.message}`);
@@ -407,6 +434,7 @@
     function renderAll() {
       renderFileList();
       renderCropList();
+      renderTimeline();
     }
 
     function renderFileList() {
@@ -706,42 +734,165 @@
     });
 
     // ============================================================
-    // CONCAT
+    // TIMELINE EDITOR (drag & drop + efek per lagu + export gabungan)
     // ============================================================
-    $('concatBtn').addEventListener('click', async () => {
+    let dragSrcId = null;
+    let lastMergedUrl = null;
+    let lastMergedName = null;
+
+    function renderTimeline() {
+      const container = $('timelineList');
+      if (!files.length) { container.innerHTML = '<div class="text-center text-zinc-500 text-sm py-6">Upload lagu dulu di Dashboard.</div>'; return; }
+      let html = '';
+      files.forEach((f, idx) => {
+        html += `
+          <div class="track-card" draggable="true" data-id="${f.id}">
+            <i class="fa-solid fa-grip-vertical drag-handle"></i>
+            <div class="track-num">${idx + 1}</div>
+            <div class="track-main">
+              <div class="track-name">${f.name}</div>
+              <div class="track-meta">${f.duration.toFixed(1)}s</div>
+            </div>
+            <div class="track-fx-row">
+              <label><input type="checkbox" class="tl-include" data-id="${f.id}" ${f.includeInTimeline ? 'checked' : ''}> Ikutkan</label>
+              <label><input type="checkbox" class="tl-denoise" data-id="${f.id}" ${f.tlDenoise.enabled ? 'checked' : ''}> Denoise</label>
+              <input type="range" class="tl-denoise-val" data-id="${f.id}" min="5" max="40" value="${f.tlDenoise.strength}" ${f.tlDenoise.enabled ? '' : 'disabled'}>
+              <label><input type="checkbox" class="tl-normalize" data-id="${f.id}" ${f.tlNormalize.enabled ? 'checked' : ''}> Normalisasi</label>
+              <input type="range" class="tl-normalize-val" data-id="${f.id}" min="-18" max="-8" step="0.5" value="${f.tlNormalize.target}" ${f.tlNormalize.enabled ? '' : 'disabled'}>
+              ${f.pitchSemis ? `<span class="text-[10px] text-indigo-300">Pitch ${f.pitchSemis > 0 ? '+' : ''}${f.pitchSemis}st</span>` : ''}
+            </div>
+            <i class="fa-solid fa-xmark track-remove" data-id="${f.id}" title="Keluarkan dari daftar"></i>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+
+      // Drag & drop reorder
+      container.querySelectorAll('.track-card').forEach(card => {
+        card.addEventListener('dragstart', () => { dragSrcId = parseInt(card.dataset.id); card.classList.add('dragging'); });
+        card.addEventListener('dragend', () => card.classList.remove('dragging'));
+        card.addEventListener('dragover', (e) => { e.preventDefault(); card.classList.add('drag-over'); });
+        card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+        card.addEventListener('drop', (e) => {
+          e.preventDefault();
+          card.classList.remove('drag-over');
+          const targetId = parseInt(card.dataset.id);
+          if (dragSrcId === null || dragSrcId === targetId) return;
+          const fromIdx = files.findIndex(x => x.id === dragSrcId);
+          const toIdx = files.findIndex(x => x.id === targetId);
+          if (fromIdx === -1 || toIdx === -1) return;
+          const [moved] = files.splice(fromIdx, 1);
+          files.splice(toIdx, 0, moved);
+          renderAll();
+          $('timelineStatus').textContent = 'Urutan diperbarui';
+        });
+      });
+
+      // Toggle include / denoise / normalize
+      container.querySelectorAll('.tl-include').forEach(cb => cb.addEventListener('change', () => {
+        const f = files.find(x => x.id === parseInt(cb.dataset.id)); if (f) f.includeInTimeline = cb.checked;
+      }));
+      container.querySelectorAll('.tl-denoise').forEach(cb => cb.addEventListener('change', () => {
+        const f = files.find(x => x.id === parseInt(cb.dataset.id)); if (f) f.tlDenoise.enabled = cb.checked; renderTimeline();
+      }));
+      container.querySelectorAll('.tl-denoise-val').forEach(sl => sl.addEventListener('input', () => {
+        const f = files.find(x => x.id === parseInt(sl.dataset.id)); if (f) f.tlDenoise.strength = parseInt(sl.value);
+      }));
+      container.querySelectorAll('.tl-normalize').forEach(cb => cb.addEventListener('change', () => {
+        const f = files.find(x => x.id === parseInt(cb.dataset.id)); if (f) f.tlNormalize.enabled = cb.checked; renderTimeline();
+      }));
+      container.querySelectorAll('.tl-normalize-val').forEach(sl => sl.addEventListener('input', () => {
+        const f = files.find(x => x.id === parseInt(sl.dataset.id)); if (f) f.tlNormalize.target = parseFloat(sl.value);
+      }));
+      container.querySelectorAll('.track-remove').forEach(btn => btn.addEventListener('click', () => {
+        const id = parseInt(btn.dataset.id);
+        files = files.filter(x => x.id !== id);
+        if (selectedFileId === id) { selectedFileId = null; updateEditorPanel(); }
+        renderAll(); updateFileInfo();
+      }));
+    }
+
+    $('exportTimelineBtn').addEventListener('click', async () => {
       if (!loaded) { log('error', 'FFmpeg belum siap.'); return; }
-      if (files.length < 2) { log('error', 'Minimal 2 file.'); return; }
-      $('concatBtn').disabled = true;
-      log('process', `🔗 Menggabung ${files.length} file...`);
-      updateProgress('Menggabung...');
+      const active = files.filter(f => f.includeInTimeline);
+      if (active.length < 1) { log('error', 'Tidak ada lagu yang diikutkan di timeline.'); return; }
+      $('exportTimelineBtn').disabled = true;
+      $('downloadMergedBtn').disabled = true;
+      $('timelineStatus').textContent = 'Memproses...';
+      log('process', `🎬 Ekspor timeline: ${active.length} lagu (efek per-lagu diterapkan sebelum digabung)`);
+      updateProgress('Ekspor timeline...');
+
       try {
-        const inputNames = [];
-        for (let i = 0; i < files.length; i++) {
-          const f = files[i];
+        const processedNames = [];
+        for (let i = 0; i < active.length; i++) {
+          const f = active[i];
           const ext = f.name.split('.').pop() || 'mp3';
-          const name = `f_${i}.${ext}`;
+          const inName = `tl_in_${i}.${ext}`;
+          const outName = `tl_out_${i}.${ext}`;
           const data = new Uint8Array(await f.file.arrayBuffer());
-          await ffmpeg.writeFile(name, data);
-          inputNames.push(name);
+          await ffmpeg.writeFile(inName, data);
+
+          // Susun filter chain berdasarkan efek yang dicentang per-lagu
+          let filters = [];
+          if (f.tlDenoise.enabled) filters.push(`afftdn=nr=${f.tlDenoise.strength}:nf=-40`);
+          if (f.pitchSemis) {
+            const ratio = Math.pow(2, f.pitchSemis / 12);
+            filters.push(f.flexEnabled ? `asetrate=44100*${ratio},aresample=44100,atempo=${(1/ratio).toFixed(4)}` : `asetrate=44100*${ratio},aresample=44100`);
+          }
+          if (f.tlNormalize.enabled) filters.push(`loudnorm=I=${f.tlNormalize.target}:TP=-1:LRA=11`);
+
+          log('info', `[${i + 1}/${active.length}] ${f.name}${filters.length ? ' — efek: ' + filters.join(' | ') : ' — tanpa efek'}`);
+
+          if (filters.length) {
+            await ffmpeg.exec(['-i', inName, '-af', filters.join(','), outName]);
+          } else {
+            await ffmpeg.exec(['-i', inName, '-c', 'copy', outName]);
+          }
+          processedNames.push(outName);
+          await ffmpeg.deleteFile(inName).catch(() => {});
         }
-        const listContent = inputNames.map(n => `file '${n}'`).join('\n');
-        await ffmpeg.writeFile('list.txt', listContent);
-        const outputName = 'merged.mp3';
-        await ffmpeg.exec(['-f', 'concat', '-safe', '0', '-i', 'list.txt', '-c', 'copy', outputName]);
-        const outData = await ffmpeg.readFile(outputName);
+
+        // Gabungkan semua hasil proses dengan concat demuxer
+        const listContent = processedNames.map(n => `file '${n}'`).join('\n');
+        await ffmpeg.writeFile('tl_list.txt', listContent);
+        const mergedName = 'tl_merged.mp3';
+        await ffmpeg.exec(['-f', 'concat', '-safe', '0', '-i', 'tl_list.txt', '-c', 'copy', mergedName]);
+        const outData = await ffmpeg.readFile(mergedName);
         if (!outData || outData.byteLength === 0) throw new Error('Hasil gabung kosong');
+
         const blob = new Blob([outData.buffer], { type: 'audio/mpeg' });
-        const newFile = new File([blob], 'merged_audio.mp3', { type: 'audio/mpeg' });
+        if (lastMergedUrl) URL.revokeObjectURL(lastMergedUrl);
+        lastMergedUrl = URL.createObjectURL(blob);
+        lastMergedName = `timeline_merged_${Date.now()}.mp3`;
+
+        const newFile = new File([blob], lastMergedName, { type: 'audio/mpeg' });
         await processFile(newFile);
-        for (const n of inputNames) await ffmpeg.deleteFile(n).catch(() => {});
-        await ffmpeg.deleteFile('list.txt').catch(() => {});
-        await ffmpeg.deleteFile(outputName).catch(() => {});
-        log('success', `✅ Gabung selesai!`);
-        renderAll();
-        updateFileInfo();
-      } catch (e) { log('error', `Gagal gabung: ${e.message}`); }
-      $('concatBtn').disabled = false;
+
+        for (const n of processedNames) await ffmpeg.deleteFile(n).catch(() => {});
+        await ffmpeg.deleteFile('tl_list.txt').catch(() => {});
+        await ffmpeg.deleteFile(mergedName).catch(() => {});
+
+        log('success', `✅ Timeline berhasil diekspor jadi 1 file: ${lastMergedName}`);
+        $('timelineStatus').textContent = 'Selesai! Siap didownload.';
+        $('downloadMergedBtn').disabled = false;
+        renderAll(); updateFileInfo();
+      } catch (e) {
+        log('error', `❌ Ekspor timeline gagal: ${e.message}`);
+        $('timelineStatus').textContent = 'Gagal, cek log.';
+      }
+      $('exportTimelineBtn').disabled = false;
       updateProgress('Siap');
+    });
+
+    $('downloadMergedBtn').addEventListener('click', () => {
+      if (!lastMergedUrl) return;
+      const a = document.createElement('a');
+      a.href = lastMergedUrl;
+      a.download = lastMergedName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      log('success', `⬇️ Download dimulai: ${lastMergedName}`);
     });
 
     // ============================================================
