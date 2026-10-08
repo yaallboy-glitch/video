@@ -24,6 +24,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 80px;
   background-color: var(--bg-primary);
   color: var(--text-main);
   font-family: var(--font-sans);
@@ -383,6 +384,8 @@ body {
 }
 
 .coffee-card-bezel {
+  display: flex;
+  flex-direction: column;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: 20px;
