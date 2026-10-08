@@ -1,186 +1,191 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@300;400;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-  <title>Portfolio — Nama Kamu</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KALA &amp; TANAH — Kopi Khusus Asal Tunggal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="site-header">
-    <div class="container nav">
-      <a class="logo" href="#">Nama Kamu</a>
-      <nav aria-label="Navigasi utama">
-        <ul class="nav-list">
-          <li><a href="#work">Work</a></li>
-          <li><a href="#about">About</a></li>
-          <li><a href="#journal">Journal</a></li>
-          <li><a class="nav-cta" href="#contact">Contact</a></li>
-        </ul>
+    <div class="nav-container">
+      <a href="#" class="brand-logo">KALA <span>&amp;</span> TANAH</a>
+      <nav class="main-nav">
+        <a href="#origin">Terroir</a>
+        <a href="#koleksi">Kurasi</a>
+        <a href="#sensory">Profil Rasa</a>
       </nav>
-      <button class="menu-btn" aria-expanded="false" aria-controls="primary-menu" aria-label="Buka menu">
-        <span class="menu-btn-line"></span>
-        <span class="menu-btn-line"></span>
-      </button>
+      <div class="header-action">
+        <a href="#koleksi" class="btn-text">Reservasi Batch № 04</a>
+      </div>
     </div>
   </header>
 
   <main>
-    <section class="hero">
-      <div class="container">
-        <div class="hero-inner">
-          <div class="hero-text">
-            <p class="eyebrow">Portfolio — 2025</p>
-            <h1>Mendesain barang yang <em>bertahan</em></h1>
-            <p class="hero-lead">
-              Design editorial, brand, dan interaksi digital untuk produk-produk
-              yang tidak suka berisik.
-            </p>
-            <div class="hero-meta">
-              <span>Jakarta / Remote</span>
-              <span>Open for projects</span>
+    <section class="hero-section">
+      <div class="hero-content">
+        <div class="hero-meta">
+          <span class="meta-tag">PANEN MICROLOT 2026</span>
+          <span class="meta-divider">•</span>
+          <span class="meta-location">LERENG IJEN, 1.650 MDPL</span>
+        </div>
+        <h1 class="hero-title">Secangkir kemurnian dari tanah vulkanik tua.</h1>
+        <p class="hero-description">
+          Bukan sekadar kafein. KALA &amp; TANAH mengurasi ceri kopi arabika langka yang dipetik tangan pada kematangan puncak, difermentasi terkontrol 72 jam, dan disangrai presisi dalam kuantitas terbatas.
+        </p>
+        <div class="hero-cta-group">
+          <a href="#koleksi" class="btn-primary">
+            <span>Jelajahi Panen</span>
+            <span class="btn-arrow" aria-hidden="true">&rarr;</span>
+          </a>
+          <a href="#origin" class="btn-secondary">Catatan Terroir</a>
+        </div>
+      </div>
+      <div class="hero-card-bezel">
+        <div class="hero-card-inner">
+          <div class="card-pill">ALOKASI AKTIF</div>
+          <div class="card-code">LOT № 04 <span class="card-code-sub">/ IJEN</span></div>
+          <div class="card-kv-grid">
+            <div class="kv-item">
+              <span class="kv-label">Varietas</span>
+              <strong class="kv-value">Typica &amp; Kartika</strong>
+            </div>
+            <div class="kv-item">
+              <span class="kv-label">Proses</span>
+              <strong class="kv-value">Anaerobic 72 Jam</strong>
+            </div>
+            <div class="kv-item">
+              <span class="kv-label">Tersisa</span>
+              <strong class="kv-value accent">14 / 200 Kantong</strong>
             </div>
           </div>
-          <div class="hero-media">
-            <figure class="hero-figure">
-              <div class="hero-image" aria-hidden="true"></div>
-              <figcaption>
-                <span>01</span>
-                <span>Studio view, Senayan</span>
-              </figcaption>
-            </figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="origin" class="origin-section">
+      <div class="section-label">01 // TERROIR &amp; EKOLOGI</div>
+      <div class="origin-layout">
+        <div class="origin-headline-col">
+          <h2 class="section-heading">Abu vulkanik tua, kabut belerang, dan waktu yang melambat.</h2>
+          <p class="origin-body">
+            Di ketinggian 1.650 mdpl lereng Gunung Ijen, udara malam turun hingga 11°C. Fluktuasi ekstrem ini memaksa pohon kopi mengonsentrasikan seluruh glukosa ke dalam biji, melahirkan densitas rasa yang kaya tanpa kepahitan tajam.
+          </p>
+        </div>
+        <div class="origin-stats-col">
+          <div class="stat-card">
+            <span class="stat-num">1.650<small>m</small></span>
+            <span class="stat-desc">Elevasi kebun vulkanik</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num">72<small>h</small></span>
+            <span class="stat-desc">Fermentasi mikro anaerobik</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num">88.8</span>
+            <span class="stat-desc">Skor Specialty Coffee (SCA)</span>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="work" class="work">
-      <div class="container">
-        <header class="section-header">
-          <p class="eyebrow">Selected work</p>
-          <h2>Pilihan</h2>
-        </header>
-        <ul class="work-list">
-          <li class="work-item">
-            <article class="work-card">
-              <div class="work-thumb" aria-hidden="true"></div>
-              <div class="work-body">
-                <h3>Nusantara — Brand System</h3>
-                <p>Branding, sistem tipografi, dan packaging untuk perusahaan retail domestik.</p>
-                <dl>
-                  <dt>Year</dt><dd>2025</dd>
-                  <dt>Role</dt><dd>Lead Designer</dd>
-                  <dt>Tags</dt><dd>Brand / Editorial</dd>
-                </dl>
-              </div>
-            </article>
-          </li>
-          <li class="work-item">
-            <article class="work-card">
-              <div class="work-thumb thumb-2" aria-hidden="true"></div>
-              <div class="work-body">
-                <h3>Ritual — Digital Magazine</h3>
-                <p>Redesign editorial web dengan prioritas bacaan panjang dan tipografi berlapis.</p>
-                <dl>
-                  <dt>Year</dt><dd>2025</dd>
-                  <dt>Role</dt><dd>Art Direction</dd>
-                  <dt>Tags</dt><dd>Editorial / Web</dd>
-                </dl>
-              </div>
-            </article>
-          </li>
-          <li class="work-item">
-            <article class="work-card">
-              <div class="work-thumb thumb-3" aria-hidden="true"></div>
-              <div class="work-body">
-                <h3>Cloth &amp; Grain — E-commerce</h3>
-                <p>Desain UI untuk toko kain dan pakaian lokal, dibangun di atas modul Shopify.</p>
-                <dl>
-                  <dt>Year</dt><dd>2024</dd>
-                  <dt>Role</dt><dd>Product Design</dd>
-                  <dt>Tags</dt><dd>UI / Commerce</dd>
-                </dl>
-              </div>
-            </article>
-          </li>
-        </ul>
+    <section id="koleksi" class="collection-section">
+      <div class="section-label">02 // EDISI KURASI TERBATAS</div>
+      <div class="collection-intro">
+        <h2 class="section-heading">Tiga karakter. Satu standar tak terkompromi.</h2>
+        <p class="collection-sub">Disangrai batch mikro setiap hari Selasa menggunakan mesin sangrai Loring udara panas bersih.</p>
       </div>
-    </section>
 
-    <section id="about" class="about">
-      <div class="container about-grid">
-        <div class="about-col">
-          <p class="eyebrow">About</p>
-          <h2>Sangat sedikit suara, tapi cukuplah.</h2>
-        </div>
-        <div class="about-col">
-          <p>
-            Saya bekerja dengan merek dan produk yang percaya detail adalah hal yang
-            tidak bisa ditawar. Fokus saya: tipografi, komposisi, dan waktu baca.
-          </p>
-          <p>
-            Bukan yang coba "terlihat bagus". Bukan yang ikut tren. Kerjanya untuk
-            orang yang suka melihat sekali lalu tahu ini serius.
-          </p>
-          <ul class="about-list">
-            <li>Konteks: brand, editorial, packaging</li>
-            <li>Alat: Figma, After Effects, dasar HTML/CSS</li>
-            <li>Motto: kurangi, jangan tambah</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <section id="journal" class="journal">
-      <div class="container">
-        <header class="section-header">
-          <p class="eyebrow">Journal</p>
-          <h2>Catatan</h2>
-        </header>
-        <ul class="journal-list">
-          <li>
-            <a href="#">
-              <span class="journal-number">01</span>
-              <span class="journal-title">Tentang jeda dalam layout editorial</span>
-              <span class="journal-meta">Oct 2025 · 4 menit baca</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <span class="journal-number">02</span>
-              <span class="journal-title">Warna tanah yang tidak membosankan</span>
-              <span class="journal-meta">Sep 2025 · 6 menit baca</span>
-            </a>
-          </li>
-          <li>
-            <a href="#">
-              <span class="journal-number">03</span>
-              <span class="journal-title">Tipografi dan harga yang tidak terlihat</span>
-              <span class="journal-meta">Aug 2025 · 3 menit baca</span>
-            </a>
-          </li>
-        </ul>
-      </div>
-    </section>
-
-    <section id="contact" class="contact">
-      <div class="container">
-        <div class="contact-inner">
-          <div class="contact-text">
-            <p class="eyebrow">Contact</p>
-            <h2>Mari bicara yang tenang.</h2>
-            <p>
-              Kirim brief singkat. Saya balas dalam 1–2 hari kerja. Jika cocok, kita mulai
-              dari sketsa kasar, bukan proposal yang bertele-tele.
-            </p>
+      <div class="cards-bento">
+        <article class="coffee-card-bezel bento-featured">
+          <div class="coffee-card-inner">
+            <div class="card-top">
+              <span class="card-badge">LOT KHUSUS KURATOR</span>
+              <span class="card-roast">Sangrai Ringan</span>
+            </div>
+            <h3 class="coffee-name">Ijen Anaerobic Typica</h3>
+            <div class="cupping-notes">
+              <span class="note-tag">Ara Kering</span>
+              <span class="note-tag">Bergamot</span>
+              <span class="note-tag">Madu Hutan Liar</span>
+            </div>
+            <p class="coffee-desc">Pohon typica tua pra-kolonial yang bertahan di kantong tanah subur tebing barat.</p>
+            <div class="card-bottom">
+              <span class="card-price">Rp 185.000 <small>/ 200g</small></span>
+              <button class="btn-order" type="button">Amankan Batch</button>
+            </div>
           </div>
-          <div class="contact-links">
-            <a class="contact-btn" href="mailto:hello@namakamu.com">hello@namakamu.com</a>
-            <a class="contact-btn" href="#">Instagram</a>
-            <a class="contact-btn" href="#">LinkedIn</a>
+        </article>
+
+        <article class="coffee-card-bezel">
+          <div class="coffee-card-inner">
+            <div class="card-top">
+              <span class="card-badge">SUMATRA HIGHLAND</span>
+              <span class="card-roast">Sangrai Sedang</span>
+            </div>
+            <h3 class="coffee-name">Kerinci Red Honey</h3>
+            <div class="cupping-notes">
+              <span class="note-tag">Plum Hitam</span>
+              <span class="note-tag">Kakao 80%</span>
+              <span class="note-tag">Bunga Melati</span>
+            </div>
+            <p class="coffee-desc">Diproses madu merah dengan lendir buah utuh yang dikeringkan perlahan di rumah kaca berventilasi.</p>
+            <div class="card-bottom">
+              <span class="card-price">Rp 210.000 <small>/ 200g</small></span>
+              <button class="btn-order" type="button">Amankan Batch</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="coffee-card-bezel">
+          <div class="coffee-card-inner">
+            <div class="card-top">
+              <span class="card-badge">SULAWESI ANCESTRAL</span>
+              <span class="card-roast">Sangrai Filter</span>
+            </div>
+            <h3 class="coffee-name">Toraja Sapan Heritage</h3>
+            <div class="cupping-notes">
+              <span class="note-tag">Kapulaga</span>
+              <span class="note-tag">Jeruk Mandarin</span>
+              <span class="note-tag">Gula Kelapa</span>
+            </div>
+            <p class="coffee-desc">Kultur giling basah artisan yang disempurnakan dengan penjemuran bertahap di bawah naungan.</p>
+            <div class="card-bottom">
+              <span class="card-price">Rp 195.000 <small>/ 200g</small></span>
+              <button class="btn-order" type="button">Amankan Batch</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="sensory" class="ritual-section">
+      <div class="section-label">03 // RITUAL PENYEDUHAN</div>
+      <div class="ritual-card-bezel">
+        <div class="ritual-card-inner">
+          <div class="ritual-header">
+            <h2 class="ritual-title">Sains ekstraksi di cangkir Anda.</h2>
+            <p class="ritual-desc">Rekomendasi parameter kurator untuk membuka spektrum aromatik tertinggi.</p>
+          </div>
+          <div class="parameters-grid">
+            <div class="param-card">
+              <span class="param-kicker">SUHU AIR</span>
+              <strong class="param-val">92°C</strong>
+              <span class="param-sub">Air mineral TDS 80-110 ppm</span>
+            </div>
+            <div class="param-card">
+              <span class="param-kicker">RASIO SEDUH</span>
+              <strong class="param-val">1:16</strong>
+              <span class="param-sub">15g bubuk ke 240ml air</span>
+            </div>
+            <div class="param-card">
+              <span class="param-kicker">WAKTU TOTAL</span>
+              <strong class="param-val">2:45</strong>
+              <span class="param-sub">Mekar 40 dtk + 2 tuangan rata</span>
+            </div>
           </div>
         </div>
       </div>
@@ -188,20 +193,20 @@
   </main>
 
   <footer class="site-footer">
-    <div class="container footer-grid">
-      <p>© 2025 Nama Kamu. Tidak ada cookie yang menguntungkan.</p>
-      <a href="#">Kembali ke atas ↑</a>
+    <div class="footer-inner">
+      <div class="footer-meta">
+        <div class="footer-logo">KALA <span>&amp;</span> TANAH</div>
+        <p class="footer-tagline">Kurasi kopi tunggal Indonesia. Berakar pada kelestarian tanah dan ketelitian rasa.</p>
+      </div>
+      <div class="footer-coords">
+        <span>SANGRAI STUDIO • KAWASAN IJEN TIMUR</span>
+        <span>LAT: -8.0587 // LONG: 114.2455</span>
+      </div>
+    </div>
+    <div class="footer-bottom-bar">
+      <span>&copy; 2026 KALA &amp; TANAH. Seluruh hak cipta dilindungi.</span>
+      <span>EDISI ARSIP TERBATAS</span>
     </div>
   </footer>
-
-  <script>
-    const menuBtn = document.querySelector('.menu-btn');
-    const navList = document.querySelector('.nav-list');
-    menuBtn.addEventListener('click', () => {
-      const open = menuBtn.getAttribute('aria-expanded') === 'true';
-      menuBtn.setAttribute('aria-expanded', String(!open));
-      navList.classList.toggle('is-open', !open);
-    });
-  </script>
 </body>
 </html>
